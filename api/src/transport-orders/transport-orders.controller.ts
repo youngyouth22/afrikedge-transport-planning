@@ -20,7 +20,7 @@ import { FindTransportOrdersDto } from './dto/find-transport-orders.dto.js';
 import {
   CurrentUser,
   Roles,
-  RolesGuard,
+  UserGuard,
   UserRole,
 } from '../auth/auth.guard.js';
 import type { UserContext } from '../auth/auth.guard.js';
@@ -28,7 +28,7 @@ import type { UserContext } from '../auth/auth.guard.js';
 @ApiTags('Transport Orders')
 @ApiSecurity('X-User-Id')
 @Controller('transport-orders')
-@UseGuards(RolesGuard)
+@UseGuards(UserGuard)
 export class TransportOrdersController {
   constructor(private readonly service: TransportOrdersService) {}
 

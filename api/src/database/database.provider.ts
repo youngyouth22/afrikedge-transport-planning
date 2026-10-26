@@ -59,6 +59,32 @@ export class DatabaseProvider implements OnModuleInit, OnModuleDestroy {
     return this.pool;
   }
 
+  /**
+   * Runs `work` inside a single transaction: commit on success, rollback on any error.
+   * The original error is always rethrown, even if the rollback itself fails
+   * (SQL Server may already have aborted the transaction, e.g. after a deadlock).
+   */
+  async withTransaction<T>(
+    work: (transaction: sql.Transaction) => Promise<T>,
+    isolationLevel: number = sql.ISOLATION_LEVEL.READ_COMMITTED,
+  ): Promise<T> {
+    const transaction = new sql.Transaction(this.connection);
+    await transaction.begin(isolationLevel);
+
+    try {
+      const result = await work(transaction);
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      try {
+        await transaction.rollback();
+      } catch (rollbackError) {
+        this.logger.warn(`Rollback failed: ${(rollbackError as Error).message}`);
+      }
+      throw error;
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     if (this.pool?.connected) {
       await this.pool.close();

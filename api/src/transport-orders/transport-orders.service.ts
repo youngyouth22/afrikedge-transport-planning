@@ -1,16 +1,25 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import sql from 'mssql';
 import { DatabaseProvider } from '../database/database.provider.js';
-import { UserContext, UserRole } from '../auth/auth.guard.js';
+import { UserContext } from '../auth/auth.guard.js';
 import { CreateTransportOrderDto } from './dto/create-transport-order.dto.js';
 import { AddTransportOrderLinesDto } from './dto/add-transport-order-lines.dto.js';
 import { FindTransportOrdersDto } from './dto/find-transport-orders.dto.js';
+import { conflict, notFound } from '../common/api-error.js';
+import {
+  assertCanDepart,
+  assertCanValidate,
+  assertCanValidateRole,
+  assertDeliveryDateNotPast,
+  assertSalesOrdersAssignable,
+  assertTransportIsDraft,
+  assertVehicleUsable,
+  assertWithinCapacity,
+  nextTransportOrderNo,
+  normalizeSalesOrderNos,
+  sumWeightsKg,
+  TransportOrderStatus,
+} from './transport-order.rules.js';
 
 export interface TransportOrderSummary {
   no: string;
@@ -32,7 +41,6 @@ export interface PaginatedTransportOrders {
   limit: number;
   totalPages: number;
 }
-
 
 export interface TransportOrderLineDetail {
   salesOrderNo: string;
@@ -159,7 +167,6 @@ export class TransportOrdersService {
     };
   }
 
-
   async findOne(no: string): Promise<TransportOrderDetail> {
     const requestHeader = this.database.connection.request();
     requestHeader.input('no', no);
@@ -181,7 +188,7 @@ export class TransportOrdersService {
 
     const headerResult = await requestHeader.query(headerQuery);
     if (headerResult.recordset.length === 0) {
-      throw new NotFoundException(`Ordre de transport "${no}" introuvable.`);
+      throw notFound('TRANSPORT_NOT_FOUND', `Ordre de transport "${no}" introuvable.`, { no });
     }
 
     const header = headerResult.recordset[0];
@@ -213,7 +220,7 @@ export class TransportOrdersService {
       status: Number(row.status),
     }));
 
-    const totalWeightKg = orders.reduce((sum, order) => sum + order.totalWeightKg, 0);
+    const totalWeightKg = sumWeightsKg(orders.map((o) => o.totalWeightKg));
 
     return {
       no: header.no,
@@ -224,7 +231,7 @@ export class TransportOrdersService {
       status: Number(header.status),
       createdBy: header.createdBy,
       validatedBy: header.validatedBy,
-      totalWeightKg: Math.round(totalWeightKg * 100) / 100,
+      totalWeightKg,
       orders,
     };
   }
@@ -233,24 +240,11 @@ export class TransportOrdersService {
     dto: CreateTransportOrderDto,
     user: UserContext,
   ): Promise<{ no: string }> {
-    const now = new Date();
-    const localYear = now.getFullYear();
-    const localMonth = String(now.getMonth() + 1).padStart(2, '0');
-    const localDay = String(now.getDate()).padStart(2, '0');
-    const todayStr = `${localYear}-${localMonth}-${localDay}`;
     const deliveryDateStr = dto.deliveryDate.slice(0, 10);
+    assertDeliveryDateNotPast(deliveryDateStr, new Date());
 
-    if (deliveryDateStr < todayStr) {
-      throw new BadRequestException(
-        'La date de livraison ne peut pas être dans le passé.',
-      );
-    }
-
-    const transaction = new sql.Transaction(this.database.connection);
-    await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
-
-    try {
-      // Vérifier l'existence et l'état du véhicule
+    return this.database.withTransaction(async (transaction) => {
+      // 1. Lock and check vehicle
       const reqVehicle = new sql.Request(transaction);
       reqVehicle.input('vehicleCode', dto.vehicleCode);
       const vehicleRes = await reqVehicle.query<{ active: boolean }>(`
@@ -259,17 +253,9 @@ export class TransportOrdersService {
         WHERE [Code] = @vehicleCode
       `);
 
-      if (vehicleRes.recordset.length === 0) {
-        throw new NotFoundException(`Véhicule "${dto.vehicleCode}" introuvable.`);
-      }
+      assertVehicleUsable(dto.vehicleCode, vehicleRes.recordset[0]);
 
-      if (!vehicleRes.recordset[0].active) {
-        throw new BadRequestException(
-          `Le véhicule "${dto.vehicleCode}" est hors service.`,
-        );
-      }
-
-      // Vérifier l'unicité du véhicule par date
+      // 2. Lock on date/vehicle to prevent double booking race condition
       const reqUnique = new sql.Request(transaction);
       reqUnique.input('vehicleCode', dto.vehicleCode);
       reqUnique.input('deliveryDate', deliveryDateStr);
@@ -279,27 +265,22 @@ export class TransportOrdersService {
       `);
 
       if (uniqueRes.recordset.length > 0) {
-        throw new ConflictException(
+        throw conflict(
+          'VEHICLE_ALREADY_BOOKED',
           `Un ordre de transport existe déjà pour le véhicule "${dto.vehicleCode}" à la date du ${deliveryDateStr}.`,
+          { vehicleCode: dto.vehicleCode, deliveryDate: deliveryDateStr },
         );
       }
 
-      // Générer le numéro suivant TO-XXXX
+      // 3. Generate sequential order number TO-XXXX safely
       const reqMax = new sql.Request(transaction);
-      const maxRes = await reqMax.query<{ maxNo: string | null }>(`
-        SELECT MAX([No_]) AS maxNo FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+      const maxRes = await reqMax.query<{ maxSuffix: number | null }>(`
+        SELECT MAX(TRY_CAST(SUBSTRING([No_], 4, 10) AS int)) AS maxSuffix
+        FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [No_] LIKE 'TO-%'
       `);
 
-      let nextIndex = 1;
-      if (maxRes.recordset[0]?.maxNo) {
-        const parts = maxRes.recordset[0].maxNo.split('-');
-        const num = parseInt(parts[1], 10);
-        if (!isNaN(num)) {
-          nextIndex = num + 1;
-        }
-      }
-
-      const newNo = `TO-${String(nextIndex).padStart(4, '0')}`;
+      const newNo = nextTransportOrderNo(maxRes.recordset[0]?.maxSuffix ?? null);
 
       const reqInsert = new sql.Request(transaction);
       reqInsert.input('no', newNo);
@@ -312,60 +293,40 @@ export class TransportOrdersService {
         VALUES (@no, @vehicleCode, @deliveryDate, 0, @createdBy, NULL)
       `);
 
-      await transaction.commit();
       return { no: newNo };
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
-    }
+    }, sql.ISOLATION_LEVEL.SERIALIZABLE);
   }
-
 
   async addLines(
     no: string,
     dto: AddTransportOrderLinesDto,
   ): Promise<{ success: boolean; added: number; totalWeightKg: number }> {
-    const rawIds = dto.salesOrderNos.map((id) => id.trim()).filter(Boolean);
-    const uniqueOrderNos = Array.from(new Set(rawIds));
+    const uniqueOrderNos = normalizeSalesOrderNos(dto.salesOrderNos);
 
-    if (uniqueOrderNos.length === 0) {
-      throw new BadRequestException(
-        'Veuillez sélectionner au moins une commande de vente valide.',
-      );
-    }
+    return this.database.withTransaction(async (transaction) => {
+      // 1. Lock transport order header and get vehicle capacity
+      const reqOrder = new sql.Request(transaction);
+      reqOrder.input('no', no);
+      const orderRes = await reqOrder.query<{
+        status: number;
+        capacityKg: number;
+      }>(`
+        SELECT
+          to_order.[Status] AS status,
+          CAST(v.[Capacity (kg)] AS float) AS capacityKg
+        FROM [Transport Order] to_order WITH (UPDLOCK, HOLDLOCK)
+        INNER JOIN [Vehicle] v ON to_order.[Vehicle Code] = v.[Code]
+        WHERE to_order.[No_] = @no
+      `);
 
-    // Vérifier l'ordre de transport
-    const reqOrder = this.database.connection.request();
-    reqOrder.input('no', no);
-    const orderRes = await reqOrder.query<{
-      status: number;
-      capacityKg: number;
-    }>(`
-      SELECT
-        to_order.[Status] AS status,
-        CAST(v.[Capacity (kg)] AS float) AS capacityKg
-      FROM [Transport Order] to_order
-      INNER JOIN [Vehicle] v ON to_order.[Vehicle Code] = v.[Code]
-      WHERE to_order.[No_] = @no
-    `);
+      if (orderRes.recordset.length === 0) {
+        throw notFound('TRANSPORT_NOT_FOUND', `Ordre de transport "${no}" introuvable.`, { no });
+      }
 
-    if (orderRes.recordset.length === 0) {
-      throw new NotFoundException(`Ordre de transport "${no}" introuvable.`);
-    }
+      const { status, capacityKg } = orderRes.recordset[0];
+      assertTransportIsDraft(no, status);
 
-    const { status, capacityKg } = orderRes.recordset[0];
-    if (status !== 0) {
-      throw new BadRequestException(
-        "Impossible d'ajouter des commandes à un ordre qui n'est plus au statut Brouillon.",
-      );
-    }
-
-    // Démarrer une transaction SQL pour garantir l'atomicité
-    const transaction = new sql.Transaction(this.database.connection);
-    await transaction.begin();
-
-    try {
-      // 1. Calculer le poids actuellement affecté
+      // 2. Calculate current weight
       const reqCurrent = new sql.Request(transaction);
       reqCurrent.input('no', no);
       const currentRes = await reqCurrent.query<{ currentWeight: number }>(`
@@ -376,8 +337,7 @@ export class TransportOrdersService {
       `);
       const currentWeight = Number(currentRes.recordset[0]?.currentWeight ?? 0);
 
-      // 2. Vérifier les commandes à affecter
-      // Construction de paramètres sécurisés
+      // 3. Lock candidate sales orders (UPDLOCK, HOLDLOCK) to prevent concurrent double assignment
       const reqOrders = new sql.Request(transaction);
       const paramNames: string[] = [];
       uniqueOrderNos.forEach((orderNo, idx) => {
@@ -395,58 +355,41 @@ export class TransportOrdersService {
           so.[No_] AS [no],
           so.[Status] AS status,
           CAST(so.[Total Weight (kg)] AS float) AS totalWeightKg
-        FROM [Sales Order] so
+        FROM [Sales Order] so WITH (UPDLOCK, HOLDLOCK)
         WHERE so.[No_] IN (${paramNames.join(', ')})
       `);
 
-      if (ordersRes.recordset.length !== uniqueOrderNos.length) {
-        throw new NotFoundException(
-          'Une ou plusieurs commandes sélectionnées sont introuvables.',
-        );
-      }
-
-      // Vérifier que toutes les commandes sont au statut 0 (À planifier)
-      const invalidStatusOrders = ordersRes.recordset.filter(
-        (o) => Number(o.status) !== 0,
-      );
-      if (invalidStatusOrders.length > 0) {
-        throw new BadRequestException(
-          `Les commandes suivantes ne sont pas au statut "À planifier" (0) : ${invalidStatusOrders.map((o) => o.no).join(', ')}.`,
-        );
-      }
-
-      // Vérifier qu'aucune commande n'est déjà présente dans Transport Order Line
+      // 4. Check if any are already assigned to ANY transport order
       const reqAlready = new sql.Request(transaction);
       uniqueOrderNos.forEach((orderNo, idx) => {
         reqAlready.input(`so_${idx}`, orderNo);
       });
       const alreadyRes = await reqAlready.query<{ salesOrderNo: string }>(`
         SELECT [Sales Order No_] AS salesOrderNo
-        FROM [Transport Order Line]
+        FROM [Transport Order Line] WITH (UPDLOCK, HOLDLOCK)
         WHERE [Sales Order No_] IN (${paramNames.join(', ')})
       `);
 
-      if (alreadyRes.recordset.length > 0) {
-        throw new ConflictException(
-          `Certaines commandes sont déjà associées à un transport : ${alreadyRes.recordset.map((r) => r.salesOrderNo).join(', ')}.`,
-        );
-      }
+      const alreadyAssigned = alreadyRes.recordset.map((r) => r.salesOrderNo);
 
-      // 3. Contrôle de capacité
-      const additionalWeight = ordersRes.recordset.reduce(
-        (sum, o) => sum + Number(o.totalWeightKg),
-        0,
+      // Verify business assignment invariants
+      assertSalesOrdersAssignable(
+        uniqueOrderNos,
+        ordersRes.recordset.map((r) => ({
+          no: r.no,
+          status: Number(r.status),
+          totalWeightKg: Number(r.totalWeightKg),
+        })),
+        alreadyAssigned,
       );
-      const newTotalWeight = currentWeight + additionalWeight;
 
-      if (newTotalWeight > capacityKg) {
-        const excess = Math.round((newTotalWeight - capacityKg) * 100) / 100;
-        throw new BadRequestException(
-          `La capacité maximale du véhicule (${capacityKg} kg) serait dépassée de ${excess} kg.`,
-        );
-      }
+      // 5. Check vehicle capacity
+      const additionalWeight = sumWeightsKg(
+        ordersRes.recordset.map((o) => Number(o.totalWeightKg)),
+      );
+      const newTotalWeight = assertWithinCapacity(currentWeight, additionalWeight, capacityKg);
 
-      // 4. Insérer les lignes et mettre à jour le statut des commandes vers 1 (Planifiée)
+      // 6. Insert lines and update statuses to planned (1)
       for (const orderNo of uniqueOrderNos) {
         const reqInsert = new sql.Request(transaction);
         reqInsert.input('toNo', no);
@@ -467,60 +410,52 @@ export class TransportOrdersService {
         WHERE [No_] IN (${paramNames.join(', ')})
       `);
 
-      await transaction.commit();
-
       return {
         success: true,
         added: uniqueOrderNos.length,
-        totalWeightKg: Math.round(newTotalWeight * 100) / 100,
+        totalWeightKg: newTotalWeight,
       };
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
-    }
+    });
   }
 
   async removeLine(
     no: string,
     salesOrderNo: string,
   ): Promise<{ success: boolean }> {
-    const reqOrder = this.database.connection.request();
-    reqOrder.input('no', no);
-    const orderRes = await reqOrder.query<{ status: number }>(`
-      SELECT [Status] AS status
-      FROM [Transport Order]
-      WHERE [No_] = @no
-    `);
+    return this.database.withTransaction(async (transaction) => {
+      // 1. Check and lock transport status
+      const reqOrder = new sql.Request(transaction);
+      reqOrder.input('no', no);
+      const orderRes = await reqOrder.query<{ status: number }>(`
+        SELECT [Status] AS status
+        FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [No_] = @no
+      `);
 
-    if (orderRes.recordset.length === 0) {
-      throw new NotFoundException(`Ordre de transport "${no}" introuvable.`);
-    }
+      if (orderRes.recordset.length === 0) {
+        throw notFound('TRANSPORT_NOT_FOUND', `Ordre de transport "${no}" introuvable.`, { no });
+      }
 
-    if (Number(orderRes.recordset[0].status) !== 0) {
-      throw new BadRequestException(
-        "Impossible de retirer une commande d'un ordre qui n'est plus au statut Brouillon.",
-      );
-    }
+      assertTransportIsDraft(no, Number(orderRes.recordset[0].status));
 
-    // Vérifier que la ligne existe
-    const reqLine = this.database.connection.request();
-    reqLine.input('no', no);
-    reqLine.input('salesOrderNo', salesOrderNo);
-    const lineRes = await reqLine.query(`
-      SELECT 1 FROM [Transport Order Line]
-      WHERE [Transport Order No_] = @no AND [Sales Order No_] = @salesOrderNo
-    `);
+      // 2. Check line existence
+      const reqLine = new sql.Request(transaction);
+      reqLine.input('no', no);
+      reqLine.input('salesOrderNo', salesOrderNo);
+      const lineRes = await reqLine.query(`
+        SELECT 1 FROM [Transport Order Line] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [Transport Order No_] = @no AND [Sales Order No_] = @salesOrderNo
+      `);
 
-    if (lineRes.recordset.length === 0) {
-      throw new NotFoundException(
-        `La commande "${salesOrderNo}" n'appartient pas à cet ordre de transport.`,
-      );
-    }
+      if (lineRes.recordset.length === 0) {
+        throw notFound(
+          'LINE_NOT_FOUND',
+          `La commande "${salesOrderNo}" n'appartient pas à l'ordre de transport "${no}".`,
+          { transportNo: no, salesOrderNo },
+        );
+      }
 
-    const transaction = new sql.Transaction(this.database.connection);
-    await transaction.begin();
-
-    try {
+      // 3. Delete line & restore sales order to status 0
       const reqDelete = new sql.Request(transaction);
       reqDelete.input('no', no);
       reqDelete.input('salesOrderNo', salesOrderNo);
@@ -537,96 +472,78 @@ export class TransportOrdersService {
         WHERE [No_] = @salesOrderNo
       `);
 
-      await transaction.commit();
       return { success: true };
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
-    }
+    });
   }
 
   async validate(
     no: string,
     user: UserContext,
   ): Promise<{ success: boolean; status: number }> {
-    if (user.role !== UserRole.LOGISTICS_MANAGER) {
-      throw new ForbiddenException(
-        'Seul un Logistics Manager peut valider un ordre de transport.',
-      );
-    }
+    assertCanValidateRole(user);
 
-    const reqOrder = this.database.connection.request();
-    reqOrder.input('no', no);
-    const orderRes = await reqOrder.query<{ status: number }>(`
-      SELECT [Status] AS status
-      FROM [Transport Order]
-      WHERE [No_] = @no
-    `);
+    return this.database.withTransaction(async (transaction) => {
+      const reqOrder = new sql.Request(transaction);
+      reqOrder.input('no', no);
+      const orderRes = await reqOrder.query<{ status: number }>(`
+        SELECT [Status] AS status
+        FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [No_] = @no
+      `);
 
-    if (orderRes.recordset.length === 0) {
-      throw new NotFoundException(`Ordre de transport "${no}" introuvable.`);
-    }
+      if (orderRes.recordset.length === 0) {
+        throw notFound('TRANSPORT_NOT_FOUND', `Ordre de transport "${no}" introuvable.`, { no });
+      }
 
-    if (Number(orderRes.recordset[0].status) !== 0) {
-      throw new BadRequestException(
-        "Seul un ordre au statut Brouillon (0) peut être validé.",
-      );
-    }
+      const status = Number(orderRes.recordset[0].status);
+      if (status !== TransportOrderStatus.DRAFT) {
+        assertCanValidate(no, status, 1);
+      }
 
-    // Vérifier qu'il y a au moins une commande
-    const reqCount = this.database.connection.request();
-    reqCount.input('no', no);
-    const countRes = await reqCount.query<{ lineCount: number }>(`
-      SELECT COUNT(*) AS lineCount
-      FROM [Transport Order Line]
-      WHERE [Transport Order No_] = @no
-    `);
+      // Check count of assigned sales orders
+      const reqCount = new sql.Request(transaction);
+      reqCount.input('no', no);
+      const countRes = await reqCount.query<{ lineCount: number }>(`
+        SELECT COUNT(*) AS lineCount
+        FROM [Transport Order Line] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [Transport Order No_] = @no
+      `);
 
-    const lineCount = Number(countRes.recordset[0]?.lineCount ?? 0);
-    if (lineCount === 0) {
-      throw new BadRequestException(
-        'Un ordre de transport doit contenir au moins une commande pour être validé.',
-      );
-    }
+      const lineCount = Number(countRes.recordset[0]?.lineCount ?? 0);
+      assertCanValidate(no, status, lineCount);
 
-    const reqUpdate = this.database.connection.request();
-    reqUpdate.input('no', no);
-    reqUpdate.input('validatedBy', user.id);
-    await reqUpdate.query(`
-      UPDATE [Transport Order]
-      SET [Status] = 1, [Validated By] = @validatedBy
-      WHERE [No_] = @no
-    `);
+      const reqUpdate = new sql.Request(transaction);
+      reqUpdate.input('no', no);
+      reqUpdate.input('validatedBy', user.id);
+      await reqUpdate.query(`
+        UPDATE [Transport Order]
+        SET [Status] = 1, [Validated By] = @validatedBy
+        WHERE [No_] = @no
+      `);
 
-    return { success: true, status: 1 };
+      return { success: true, status: 1 };
+    });
   }
 
   async depart(
     no: string,
     _user: UserContext,
   ): Promise<{ success: boolean; status: number }> {
-    const reqOrder = this.database.connection.request();
-    reqOrder.input('no', no);
-    const orderRes = await reqOrder.query<{ status: number }>(`
-      SELECT [Status] AS status
-      FROM [Transport Order]
-      WHERE [No_] = @no
-    `);
+    return this.database.withTransaction(async (transaction) => {
+      const reqOrder = new sql.Request(transaction);
+      reqOrder.input('no', no);
+      const orderRes = await reqOrder.query<{ status: number }>(`
+        SELECT [Status] AS status
+        FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [No_] = @no
+      `);
 
-    if (orderRes.recordset.length === 0) {
-      throw new NotFoundException(`Ordre de transport "${no}" introuvable.`);
-    }
+      if (orderRes.recordset.length === 0) {
+        throw notFound('TRANSPORT_NOT_FOUND', `Ordre de transport "${no}" introuvable.`, { no });
+      }
 
-    if (Number(orderRes.recordset[0].status) !== 1) {
-      throw new BadRequestException(
-        'Seul un ordre validé (1) peut être marqué comme parti.',
-      );
-    }
+      assertCanDepart(no, Number(orderRes.recordset[0].status));
 
-    const transaction = new sql.Transaction(this.database.connection);
-    await transaction.begin();
-
-    try {
       const reqUpdateOrder = new sql.Request(transaction);
       reqUpdateOrder.input('no', no);
       await reqUpdateOrder.query(`
@@ -645,11 +562,7 @@ export class TransportOrdersService {
         WHERE tol.[Transport Order No_] = @no
       `);
 
-      await transaction.commit();
       return { success: true, status: 2 };
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
-    }
+    });
   }
 }

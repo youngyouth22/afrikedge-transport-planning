@@ -27,9 +27,55 @@ export function getLocalizedErrorMessage(err: unknown): string {
           ? err
           : ''
 
+  // 1. Precise machine-readable error codes from backend ApiError
+  if (err instanceof ApiError && err.errorCode) {
+    const details = (err.errorDetails as Record<string, any>) || {}
+    switch (err.errorCode) {
+      case 'TRANSPORT_NOT_FOUND':
+        return t('errors.transportNotFound', { no: details.no || '?' })
+      case 'VEHICLE_NOT_FOUND':
+        return t('errors.vehicleNotFound', { code: details.vehicleCode || '?' })
+      case 'VEHICLE_INACTIVE':
+        return t('errors.vehicleInactive')
+      case 'DELIVERY_DATE_IN_PAST':
+        return t('errors.deliveryDateInPast')
+      case 'VEHICLE_ALREADY_BOOKED':
+        return t('errors.vehicleAlreadyBooked')
+      case 'TRANSPORT_EMPTY':
+        return t('errors.emptyTransportCannotValidate')
+      case 'ROLE_FORBIDDEN':
+        return t('errors.onlyLogisticsManagerCanValidate')
+      case 'TRANSPORT_NOT_DRAFT':
+        return t('errors.onlyDraftCanBeModified')
+      case 'TRANSPORT_NOT_VALIDATED':
+        return t('errors.onlyValidatedCanDepart')
+      case 'SALES_ORDERS_ALREADY_ASSIGNED': {
+        const nos = Array.isArray(details.salesOrderNos) ? details.salesOrderNos.join(', ') : '?'
+        return t('errors.orderAlreadyAssigned', { no: nos })
+      }
+      case 'SALES_ORDERS_NOT_TO_PLAN': {
+        const nos = Array.isArray(details.salesOrderNos) ? details.salesOrderNos.join(', ') : '?'
+        return t('errors.orderNotInStatusToPlan', { no: nos })
+      }
+      case 'LINE_NOT_FOUND':
+        return t('errors.orderLineNotFound', {
+          salesOrderNo: details.salesOrderNo || '?',
+          transportNo: details.transportNo || '?',
+        })
+      case 'CAPACITY_EXCEEDED':
+        return t('errors.capacityExceeded', {
+          weight: details.totalWeightKg ?? '?',
+          capacity: details.capacityKg ?? '?',
+        })
+      case 'USER_ID_MISSING':
+      case 'USER_UNKNOWN':
+        return t('errors.unauthorized')
+    }
+  }
+
   const lower = rawMessage.toLowerCase()
 
-  // 1. Specific backend business rule patterns
+  // 2. Specific backend business rule regex/string patterns (for string or un-coded errors)
   const transportNotFoundMatch = rawMessage.match(/Ordre de transport ["']([^"']+)["'] introuvable/i)
   if (transportNotFoundMatch) {
     return t('errors.transportNotFound', { no: transportNotFoundMatch[1] })

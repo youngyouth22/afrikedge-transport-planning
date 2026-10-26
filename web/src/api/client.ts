@@ -2,18 +2,22 @@ export interface ApiErrorResponse {
   statusCode: number;
   message: string | string[];
   error?: string;
+  code?: string;
+  details?: Record<string, any>;
 }
 
 export class ApiError extends Error {
   readonly statusCode: number;
   override readonly message: string;
+  readonly errorCode?: string;
   readonly errorDetails?: unknown;
 
-  constructor(statusCode: number, message: string, errorDetails?: unknown) {
+  constructor(statusCode: number, message: string, errorCode?: string, errorDetails?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.statusCode = statusCode;
     this.message = message;
+    this.errorCode = errorCode;
     this.errorDetails = errorDetails;
   }
 }
@@ -41,11 +45,13 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     let errorMessage = `Erreur HTTP ${response.status}: ${response.statusText}`;
+    let errorCode: string | undefined = undefined;
     let errorDetails: unknown = undefined;
 
     try {
       const data = (await response.json()) as ApiErrorResponse;
-      errorDetails = data;
+      errorDetails = data.details ?? data;
+      errorCode = data.code;
       if (Array.isArray(data.message)) {
         errorMessage = data.message.join(', ');
       } else if (typeof data.message === 'string') {
@@ -55,7 +61,7 @@ export async function apiFetch<T>(
       // response wasn't JSON
     }
 
-    throw new ApiError(response.status, errorMessage, errorDetails);
+    throw new ApiError(response.status, errorMessage, errorCode, errorDetails);
   }
 
   // Si 204 No Content
