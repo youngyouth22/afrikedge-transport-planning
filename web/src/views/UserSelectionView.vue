@@ -50,10 +50,12 @@ function selectUser(id: UserId) {
 
           <!-- Cycle Avatar au centre -->
           <div class="relative mb-6">
-            <div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-1 shadow-xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40">
-              <div class="flex h-full w-full items-center justify-center rounded-full bg-slate-950 font-bold text-emerald-400 text-3xl tracking-wider">
-                DI
-              </div>
+            <div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-1 shadow-xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40 overflow-hidden">
+              <img
+                src="https://api.dicebear.com/10.x/initials/svg?seed=Diane"
+                alt="Diane"
+                class="h-full w-full rounded-full object-cover bg-slate-950"
+              />
             </div>
             <div class="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 bg-emerald-500 text-slate-950 shadow-md">
               <Truck class="h-4 w-4" />
@@ -92,10 +94,12 @@ function selectUser(id: UserId) {
 
           <!-- Cycle Avatar au centre -->
           <div class="relative mb-6">
-            <div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-700 to-emerald-400 p-1 shadow-xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40">
-              <div class="flex h-full w-full items-center justify-center rounded-full bg-slate-950 font-bold text-emerald-400 text-3xl tracking-wider">
-                ER
-              </div>
+            <div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-700 to-emerald-400 p-1 shadow-xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40 overflow-hidden">
+              <img
+                src="https://api.dicebear.com/10.x/initials/svg?seed=Eric"
+                alt="Eric"
+                class="h-full w-full rounded-full object-cover bg-slate-950"
+              />
             </div>
             <div class="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 bg-emerald-500 text-slate-950 shadow-md">
               <ShieldCheck class="h-4 w-4" />

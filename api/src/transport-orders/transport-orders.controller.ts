@@ -8,10 +8,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   TransportOrdersService,
   TransportOrderDetail,
-  TransportOrderSummary,
+  PaginatedTransportOrders,
 } from './transport-orders.service.js';
 import { CreateTransportOrderDto } from './dto/create-transport-order.dto.js';
 import { AddTransportOrderLinesDto } from './dto/add-transport-order-lines.dto.js';
@@ -24,17 +25,21 @@ import {
 } from '../auth/auth.guard.js';
 import type { UserContext } from '../auth/auth.guard.js';
 
+@ApiTags('Transport Orders')
+@ApiSecurity('X-User-Id')
 @Controller('transport-orders')
 @UseGuards(RolesGuard)
 export class TransportOrdersController {
   constructor(private readonly service: TransportOrdersService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Liste paginée des ordres de transport avec filtres statut et date' })
   findAll(
     @Query() query: FindTransportOrdersDto,
-  ): Promise<TransportOrderSummary[]> {
+  ): Promise<PaginatedTransportOrders> {
     return this.service.findAll(query);
   }
+
 
   @Get(':no')
   findOne(@Param('no') no: string): Promise<TransportOrderDetail> {

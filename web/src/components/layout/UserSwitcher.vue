@@ -4,6 +4,7 @@ import { toast } from 'vue-sonner'
 import { Check, ChevronDown, UserCheck, Shield, Truck } from '@lucide/vue'
 import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const userStore = useUserStore()
 const isOpen = ref(false)
@@ -34,23 +35,23 @@ function switchUser(id: UserId) {
     <button
       type="button"
       @click="isOpen = !isOpen"
-      class="flex items-center gap-2.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+      class="flex items-center gap-2.5 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
     >
       <!-- Avatar miniature -->
-      <div class="flex h-6 w-6 items-center justify-center rounded-full bg-primary font-bold text-[10px] text-primary-foreground">
-        {{ userStore.currentUser.initials }}
-      </div>
+      <Avatar class="h-12 w-12">
+        <AvatarImage
+          :src="userStore.currentUser.avatarUrl"
+          :alt="userStore.currentUser.name"
+        />
+        <AvatarFallback>{{ userStore.currentUser.initials }}</AvatarFallback>
+      </Avatar>
 
       <div class="flex flex-col text-left">
-        <span class="font-semibold leading-tight text-foreground">{{ userStore.currentUser.name }}</span>
-        <span class="text-[10px] text-muted-foreground leading-none">{{ userStore.currentUser.roleLabel }}</span>
+        <span class="font-semibold text-[18px] leading-tight text-foreground">{{ userStore.currentUser.name }}</span>
+        <span class="text-[14px] text-muted-foreground leading-none">{{ userStore.currentUser.roleLabel }}</span>
       </div>
 
-      <span class="ml-1 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
-        {{ userStore.currentUser.role }}
-      </span>
-
-      <ChevronDown class="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200" :class="{ 'rotate-180': isOpen }" />
+      <ChevronDown class="h-4 w-auto text-muted-foreground transition-transform duration-200" :class="{ 'rotate-180': isOpen }" />
     </button>
 
     <!-- Dropdown Menu -->
@@ -70,9 +71,10 @@ function switchUser(id: UserId) {
           class="flex w-full items-start gap-3 rounded-xl p-2.5 text-left text-xs transition hover:bg-accent cursor-pointer"
           :class="{ 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20': userStore.currentUserId === 'diane' }"
         >
-          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 font-bold text-white text-xs">
-            DI
-          </div>
+          <Avatar class="h-8 w-8 shrink-0">
+            <AvatarImage src="https://api.dicebear.com/10.x/initials/svg?seed=Diane" alt="Diane" />
+            <AvatarFallback>DI</AvatarFallback>
+          </Avatar>
           <div class="flex-1">
             <div class="flex items-center justify-between">
               <span class="font-bold text-foreground">Diane</span>
@@ -95,9 +97,10 @@ function switchUser(id: UserId) {
           class="flex w-full items-start gap-3 rounded-xl p-2.5 text-left text-xs transition hover:bg-accent cursor-pointer"
           :class="{ 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20': userStore.currentUserId === 'eric' }"
         >
-          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-800 font-bold text-white text-xs">
-            ER
-          </div>
+          <Avatar class="h-8 w-8 shrink-0">
+            <AvatarImage src="https://api.dicebear.com/10.x/initials/svg?seed=Eric" alt="Eric" />
+            <AvatarFallback>ER</AvatarFallback>
+          </Avatar>
           <div class="flex-1">
             <div class="flex items-center justify-between">
               <span class="font-bold text-foreground">Eric</span>

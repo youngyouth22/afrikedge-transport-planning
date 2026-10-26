@@ -13,16 +13,22 @@ describe('SalesOrdersController', () => {
         {
           provide: SalesOrdersService,
           useValue: {
-            findToPlan: vi.fn().mockResolvedValue([
-              {
-                salesOrderNo: 'SO-1008',
-                customerNo: 'C0001',
-                customerName: 'Quincaillerie Ndokoti',
-                deliveryCity: 'Douala',
-                totalWeightKg: 430,
-                status: 0,
-              },
-            ]),
+            findToPlan: vi.fn().mockResolvedValue({
+              data: [
+                {
+                  salesOrderNo: 'SO-1008',
+                  customerNo: 'C0001',
+                  customerName: 'Quincaillerie Ndokoti',
+                  deliveryCity: 'Douala',
+                  totalWeightKg: 430,
+                  status: 0,
+                },
+              ],
+              total: 1,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+            }),
           },
         },
       ],
@@ -39,7 +45,9 @@ describe('SalesOrdersController', () => {
   it('should return sales orders to plan', async () => {
     const result = await controller.findToPlan({ city: 'Douala' });
     expect(service.findToPlan).toHaveBeenCalledWith('Douala', undefined, undefined);
-    expect(result).toHaveLength(1);
-    expect(result[0].salesOrderNo).toBe('SO-1008');
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].salesOrderNo).toBe('SO-1008');
+    expect(result.total).toBe(1);
   });
+
 });

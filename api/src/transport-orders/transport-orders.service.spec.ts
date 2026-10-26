@@ -1,5 +1,11 @@
-import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import sql from 'mssql';
 import { TransportOrdersService } from './transport-orders.service.js';
 import { DatabaseProvider } from '../database/database.provider.js';
 import { USERS } from '../auth/auth.guard.js';
@@ -8,6 +14,10 @@ describe('TransportOrdersService (Business Rules)', () => {
   let service: TransportOrdersService;
   let mockRequest: any;
   let mockDatabaseProvider: any;
+  let _beginSpy: any;
+  let commitSpy: any;
+  let rollbackSpy: any;
+
 
   beforeEach(async () => {
     mockRequest = {
@@ -18,9 +28,33 @@ describe('TransportOrdersService (Business Rules)', () => {
     mockDatabaseProvider = {
       connection: {
         request: vi.fn().mockReturnValue(mockRequest),
-        // Pour les transactions sql.Transaction(pool)
       },
     };
+
+    _beginSpy = vi
+      .spyOn(sql.Transaction.prototype, 'begin')
+      .mockResolvedValue(undefined as any);
+
+    commitSpy = vi
+      .spyOn(sql.Transaction.prototype, 'commit')
+      .mockResolvedValue(undefined as any);
+    rollbackSpy = vi
+      .spyOn(sql.Transaction.prototype, 'rollback')
+      .mockResolvedValue(undefined as any);
+
+    vi.spyOn(sql.Request.prototype, 'input').mockImplementation(function (
+      this: any,
+      ...args: any[]
+    ) {
+      mockRequest.input(...args);
+      return this;
+    });
+
+    vi.spyOn(sql.Request.prototype, 'query').mockImplementation(function (
+      ...args: any[]
+    ) {
+      return mockRequest.query(...args);
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,6 +67,10 @@ describe('TransportOrdersService (Business Rules)', () => {
     }).compile();
 
     service = module.get<TransportOrdersService>(TransportOrdersService);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('Rule 1 & 2: Creation of Transport Order', () => {
@@ -55,6 +93,7 @@ describe('TransportOrdersService (Business Rules)', () => {
           USERS.diane,
         ),
       ).rejects.toThrow(NotFoundException);
+      expect(rollbackSpy).toHaveBeenCalled();
     });
 
     it('should reject inactive vehicle', async () => {
@@ -69,6 +108,7 @@ describe('TransportOrdersService (Business Rules)', () => {
           USERS.diane,
         ),
       ).rejects.toThrow(BadRequestException);
+      expect(rollbackSpy).toHaveBeenCalled();
     });
 
     it('should reject duplicate vehicle on same delivery date', async () => {
@@ -83,6 +123,122 @@ describe('TransportOrdersService (Business Rules)', () => {
           USERS.diane,
         ),
       ).rejects.toThrow(ConflictException);
+      expect(rollbackSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Rule 3, 4, 5, 7: Bulk Assignment & Vehicle Capacity', () => {
+    it('should reject assignment to a non-draft transport order', async () => {
+      mockRequest.query.mockResolvedValueOnce({
+        recordset: [{ status: 1, capacityKg: 2000 }], // Already validated
+      });
+
+      await expect(
+        service.addLines('TO-0002', { salesOrderNos: ['SO-1008'] }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject orders not in status 0 (To Plan)', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 0, capacityKg: 2000 }] }) // Order is draft
+        .mockResolvedValueOnce({ recordset: [{ currentWeight: 500 }] }) // Current weight
+        .mockResolvedValueOnce({
+          recordset: [
+            { no: 'SO-1001', status: 2, totalWeightKg: 850 }, // Status 2 != 0
+          ],
+        });
+
+      await expect(
+        service.addLines('TO-0003', { salesOrderNos: ['SO-1001'] }),
+      ).rejects.toThrow(BadRequestException);
+      expect(rollbackSpy).toHaveBeenCalled();
+    });
+
+    it('should reject orders already assigned to another transport', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 0, capacityKg: 2000 }] }) // Order is draft
+        .mockResolvedValueOnce({ recordset: [{ currentWeight: 500 }] }) // Current weight
+        .mockResolvedValueOnce({
+          recordset: [{ no: 'SO-1008', status: 0, totalWeightKg: 430 }],
+        })
+        .mockResolvedValueOnce({
+          recordset: [{ salesOrderNo: 'SO-1008' }], // Already assigned
+        });
+
+      await expect(
+        service.addLines('TO-0003', { salesOrderNos: ['SO-1008'] }),
+      ).rejects.toThrow(ConflictException);
+      expect(rollbackSpy).toHaveBeenCalled();
+    });
+
+    it('should reject assignment when cumulative weight exceeds vehicle capacity', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 0, capacityKg: 1000 }] }) // Capacity = 1000kg
+        .mockResolvedValueOnce({ recordset: [{ currentWeight: 800 }] }) // Current = 800kg
+        .mockResolvedValueOnce({
+          recordset: [{ no: 'SO-1008', status: 0, totalWeightKg: 430 }], // +430kg = 1230kg > 1000kg
+        })
+        .mockResolvedValueOnce({ recordset: [] }); // Not yet assigned
+
+      await expect(
+        service.addLines('TO-0003', { salesOrderNos: ['SO-1008'] }),
+      ).rejects.toThrow(BadRequestException);
+      expect(rollbackSpy).toHaveBeenCalled();
+    });
+
+    it('should succeed and commit atomic transaction when assignment is valid', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 0, capacityKg: 2000 }] }) // Capacity = 2000kg
+        .mockResolvedValueOnce({ recordset: [{ currentWeight: 500 }] }) // Current = 500kg
+        .mockResolvedValueOnce({
+          recordset: [{ no: 'SO-1008', status: 0, totalWeightKg: 430 }], // +430kg = 930kg <= 2000kg
+        })
+        .mockResolvedValueOnce({ recordset: [] }) // None already assigned
+        .mockResolvedValueOnce({ rowsAffected: [1] }) // Line insert
+        .mockResolvedValueOnce({ rowsAffected: [1] }); // Status update to 1
+
+      const result = await service.addLines('TO-0003', {
+        salesOrderNos: ['SO-1008'],
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.added).toBe(1);
+      expect(result.totalWeightKg).toBe(930);
+      expect(commitSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Rule 6: Removing Sales Order from Draft Transport', () => {
+    it('should reject removal if transport is not in draft status', async () => {
+      mockRequest.query.mockResolvedValueOnce({
+        recordset: [{ status: 1 }], // Validated
+      });
+
+      await expect(
+        service.removeLine('TO-0002', 'SO-1003'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject removal if line is not part of transport', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 0 }] }) // Draft
+        .mockResolvedValueOnce({ recordset: [] }); // Line not found
+
+      await expect(
+        service.removeLine('TO-0003', 'SO-9999'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should remove line and restore sales order status to 0 atomically', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 0 }] }) // Draft
+        .mockResolvedValueOnce({ recordset: [{ 1: 1 }] }) // Line exists
+        .mockResolvedValueOnce({ rowsAffected: [1] }) // Line delete
+        .mockResolvedValueOnce({ rowsAffected: [1] }); // Status restore to 0
+
+      const result = await service.removeLine('TO-0003', 'SO-1006');
+      expect(result.success).toBe(true);
+      expect(commitSpy).toHaveBeenCalled();
     });
   });
 
@@ -135,5 +291,48 @@ describe('TransportOrdersService (Business Rules)', () => {
         BadRequestException,
       );
     });
+
+    it('should allow departure for validated transport and transition orders to status 2', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ status: 1 }] }) // Validated
+        .mockResolvedValueOnce({ rowsAffected: [1] }) // Order status -> 2
+        .mockResolvedValueOnce({ rowsAffected: [2] }); // Lines status -> 2
+
+      const result = await service.depart('TO-0002', USERS.diane);
+      expect(result.success).toBe(true);
+      expect(result.status).toBe(2);
+      expect(commitSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Pagination: findAll Transport Orders', () => {
+    it('should return paginated transport orders with total count and pages', async () => {
+      mockRequest.query
+        .mockResolvedValueOnce({ recordset: [{ total: 5 }] })
+        .mockResolvedValueOnce({
+          recordset: [
+            {
+              no: 'TO-0001',
+              vehicleCode: 'VH-02',
+              vehiclePlateNo: 'LT-219-CD',
+              vehicleCapacityKg: 2500,
+              deliveryDate: '2026-10-25',
+              status: 2,
+              createdBy: 'diane',
+              validatedBy: 'eric',
+              ordersCount: 2,
+              totalWeightKg: 2050,
+            },
+          ],
+        });
+
+      const res = await service.findAll({ page: 1, limit: 10 });
+      expect(res.data).toHaveLength(1);
+      expect(res.total).toBe(5);
+      expect(res.page).toBe(1);
+      expect(res.limit).toBe(10);
+      expect(res.totalPages).toBe(1);
+    });
   });
 });
+

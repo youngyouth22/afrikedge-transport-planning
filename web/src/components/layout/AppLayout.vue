@@ -9,14 +9,14 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex h-screen w-full overflow-hidden bg-background text-foreground">
+  <div class="min-h-screen w-full bg-background text-foreground">
     <!-- Sidebar -->
     <AppSidebar />
 
-    <!-- Main Content Area -->
-    <div class="flex flex-1 flex-col overflow-y-auto">
+    <!-- Main Content Area (Offset by fixed sidebar width and fixed header height) -->
+    <div class="flex min-h-screen flex-col lg:pl-[248px] pt-[70px] transition-all duration-300">
       <AppHeader :title="title" :breadcrumbs="breadcrumbs" />
-      <main class="flex-1 p-8">
+      <main class="flex-1 p-4 sm:p-6 lg:p-8">
         <slot />
       </main>
     </div>

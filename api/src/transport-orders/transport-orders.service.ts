@@ -25,6 +25,15 @@ export interface TransportOrderSummary {
   totalWeightKg: number;
 }
 
+export interface PaginatedTransportOrders {
+  data: TransportOrderSummary[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+
 export interface TransportOrderLineDetail {
   salesOrderNo: string;
   customerNo: string;
@@ -51,7 +60,34 @@ export interface TransportOrderDetail {
 export class TransportOrdersService {
   constructor(private readonly database: DatabaseProvider) {}
 
-  async findAll(query: FindTransportOrdersDto): Promise<TransportOrderSummary[]> {
+  async findAll(query: FindTransportOrdersDto): Promise<PaginatedTransportOrders> {
+    const page = Math.max(1, Number(query.page ?? 1));
+    const limit = Math.max(1, Math.min(100, Number(query.limit ?? 10)));
+    const offset = (page - 1) * limit;
+
+    // 1. Total matching count
+    const countRequest = this.database.connection.request();
+    let countQuery = `
+      SELECT COUNT(to_order.[No_]) AS total
+      FROM [Transport Order] AS to_order
+      WHERE 1 = 1
+    `;
+
+    if (query.status !== undefined && query.status !== null) {
+      countQuery += ` AND to_order.[Status] = @status`;
+      countRequest.input('status', query.status);
+    }
+
+    if (query.date?.trim()) {
+      countQuery += ` AND to_order.[Delivery Date] = @date`;
+      countRequest.input('date', query.date.trim());
+    }
+
+    const countRes = await countRequest.query<{ total: number }>(countQuery);
+    const total = Number(countRes.recordset[0]?.total ?? 0);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    // 2. Paginated rows
     const request = this.database.connection.request();
 
     let sqlQuery = `
@@ -94,17 +130,14 @@ export class TransportOrdersService {
         to_order.[Created By],
         to_order.[Validated By]
       ORDER BY to_order.[Delivery Date] DESC, to_order.[No_] DESC
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
     `;
 
-    if (query.page && query.limit && query.page > 0 && query.limit > 0) {
-      const offset = (query.page - 1) * query.limit;
-      sqlQuery += ` OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
-      request.input('offset', offset);
-      request.input('limit', query.limit);
-    }
+    request.input('offset', offset);
+    request.input('limit', limit);
 
     const result = await request.query<TransportOrderSummary>(sqlQuery);
-    return result.recordset.map((row) => ({
+    const data = result.recordset.map((row) => ({
       no: row.no,
       vehicleCode: row.vehicleCode,
       vehiclePlateNo: row.vehiclePlateNo,
@@ -116,7 +149,16 @@ export class TransportOrdersService {
       ordersCount: Number(row.ordersCount),
       totalWeightKg: Number(row.totalWeightKg),
     }));
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
+
 
   async findOne(no: string): Promise<TransportOrderDetail> {
     const requestHeader = this.database.connection.request();
@@ -191,7 +233,11 @@ export class TransportOrdersService {
     dto: CreateTransportOrderDto,
     user: UserContext,
   ): Promise<{ no: string }> {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const localYear = now.getFullYear();
+    const localMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const localDay = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${localYear}-${localMonth}-${localDay}`;
     const deliveryDateStr = dto.deliveryDate.slice(0, 10);
 
     if (deliveryDateStr < todayStr) {
@@ -200,70 +246,80 @@ export class TransportOrdersService {
       );
     }
 
-    // Vérifier l'existence et l'état du véhicule
-    const reqVehicle = this.database.connection.request();
-    reqVehicle.input('vehicleCode', dto.vehicleCode);
-    const vehicleRes = await reqVehicle.query<{ active: boolean }>(`
-      SELECT [Active] AS active
-      FROM [Vehicle]
-      WHERE [Code] = @vehicleCode
-    `);
+    const transaction = new sql.Transaction(this.database.connection);
+    await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
 
-    if (vehicleRes.recordset.length === 0) {
-      throw new NotFoundException(`Véhicule "${dto.vehicleCode}" introuvable.`);
-    }
+    try {
+      // Vérifier l'existence et l'état du véhicule
+      const reqVehicle = new sql.Request(transaction);
+      reqVehicle.input('vehicleCode', dto.vehicleCode);
+      const vehicleRes = await reqVehicle.query<{ active: boolean }>(`
+        SELECT [Active] AS active
+        FROM [Vehicle]
+        WHERE [Code] = @vehicleCode
+      `);
 
-    if (!vehicleRes.recordset[0].active) {
-      throw new BadRequestException(
-        `Le véhicule "${dto.vehicleCode}" est hors service.`,
-      );
-    }
-
-    // Vérifier l'unicité du véhicule par date
-    const reqUnique = this.database.connection.request();
-    reqUnique.input('vehicleCode', dto.vehicleCode);
-    reqUnique.input('deliveryDate', deliveryDateStr);
-    const uniqueRes = await reqUnique.query(`
-      SELECT 1 FROM [Transport Order]
-      WHERE [Vehicle Code] = @vehicleCode AND [Delivery Date] = @deliveryDate
-    `);
-
-    if (uniqueRes.recordset.length > 0) {
-      throw new ConflictException(
-        `Un ordre de transport existe déjà pour le véhicule "${dto.vehicleCode}" à la date du ${deliveryDateStr}.`,
-      );
-    }
-
-    // Générer le numéro suivant TO-XXXX
-    const reqMax = this.database.connection.request();
-    const maxRes = await reqMax.query<{ maxNo: string | null }>(`
-      SELECT MAX([No_]) AS maxNo FROM [Transport Order]
-    `);
-
-    let nextIndex = 1;
-    if (maxRes.recordset[0]?.maxNo) {
-      const parts = maxRes.recordset[0].maxNo.split('-');
-      const num = parseInt(parts[1], 10);
-      if (!isNaN(num)) {
-        nextIndex = num + 1;
+      if (vehicleRes.recordset.length === 0) {
+        throw new NotFoundException(`Véhicule "${dto.vehicleCode}" introuvable.`);
       }
+
+      if (!vehicleRes.recordset[0].active) {
+        throw new BadRequestException(
+          `Le véhicule "${dto.vehicleCode}" est hors service.`,
+        );
+      }
+
+      // Vérifier l'unicité du véhicule par date
+      const reqUnique = new sql.Request(transaction);
+      reqUnique.input('vehicleCode', dto.vehicleCode);
+      reqUnique.input('deliveryDate', deliveryDateStr);
+      const uniqueRes = await reqUnique.query(`
+        SELECT 1 FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [Vehicle Code] = @vehicleCode AND [Delivery Date] = @deliveryDate
+      `);
+
+      if (uniqueRes.recordset.length > 0) {
+        throw new ConflictException(
+          `Un ordre de transport existe déjà pour le véhicule "${dto.vehicleCode}" à la date du ${deliveryDateStr}.`,
+        );
+      }
+
+      // Générer le numéro suivant TO-XXXX
+      const reqMax = new sql.Request(transaction);
+      const maxRes = await reqMax.query<{ maxNo: string | null }>(`
+        SELECT MAX([No_]) AS maxNo FROM [Transport Order] WITH (UPDLOCK, HOLDLOCK)
+      `);
+
+      let nextIndex = 1;
+      if (maxRes.recordset[0]?.maxNo) {
+        const parts = maxRes.recordset[0].maxNo.split('-');
+        const num = parseInt(parts[1], 10);
+        if (!isNaN(num)) {
+          nextIndex = num + 1;
+        }
+      }
+
+      const newNo = `TO-${String(nextIndex).padStart(4, '0')}`;
+
+      const reqInsert = new sql.Request(transaction);
+      reqInsert.input('no', newNo);
+      reqInsert.input('vehicleCode', dto.vehicleCode);
+      reqInsert.input('deliveryDate', deliveryDateStr);
+      reqInsert.input('createdBy', user.id);
+
+      await reqInsert.query(`
+        INSERT INTO [Transport Order] ([No_], [Vehicle Code], [Delivery Date], [Status], [Created By], [Validated By])
+        VALUES (@no, @vehicleCode, @deliveryDate, 0, @createdBy, NULL)
+      `);
+
+      await transaction.commit();
+      return { no: newNo };
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
     }
-
-    const newNo = `TO-${String(nextIndex).padStart(4, '0')}`;
-
-    const reqInsert = this.database.connection.request();
-    reqInsert.input('no', newNo);
-    reqInsert.input('vehicleCode', dto.vehicleCode);
-    reqInsert.input('deliveryDate', deliveryDateStr);
-    reqInsert.input('createdBy', user.id);
-
-    await reqInsert.query(`
-      INSERT INTO [Transport Order] ([No_], [Vehicle Code], [Delivery Date], [Status], [Created By], [Validated By])
-      VALUES (@no, @vehicleCode, @deliveryDate, 0, @createdBy, NULL)
-    `);
-
-    return { no: newNo };
   }
+
 
   async addLines(
     no: string,

@@ -45,6 +45,26 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
+    --color-Msurfacesurfacesecondary: var(--sidebar);
+    --color-Mborderborderprimary: var(--border);
+    --color-Mmaincolorgreen: var(--primary);
+    --color-Mtexttextprimary: var(--foreground);
+    --color-Mtexttextsecondary: var(--muted-foreground);
+    --color-Msurfacesurfaceinvert: var(--muted-foreground);
+    --color-Malertswarning: #D97706;
+    --color-Malertserror: #DC2626;
+    --color-Malertssucces: #16A34A;
+    --color-Mgray400: #9CA3AF;
+}
+
+@utility text__14 {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+@utility text__16 {
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
 }
 
 :root {

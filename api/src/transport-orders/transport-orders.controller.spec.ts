@@ -17,7 +17,13 @@ describe('TransportOrdersController', () => {
 
   beforeEach(async () => {
     mockService = {
-      findAll: vi.fn().mockResolvedValue([]),
+      findAll: vi.fn().mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      }),
       findOne: vi.fn().mockResolvedValue({
         no: 'TO-0001',
         vehicleCode: 'VH-02',
@@ -57,8 +63,10 @@ describe('TransportOrdersController', () => {
   it('should call findAll', async () => {
     const result = await controller.findAll({});
     expect(mockService.findAll).toHaveBeenCalledWith({});
-    expect(result).toEqual([]);
+    expect(result.data).toEqual([]);
+    expect(result.total).toBe(0);
   });
+
 
   it('should call findOne', async () => {
     const result = await controller.findOne('TO-0001');

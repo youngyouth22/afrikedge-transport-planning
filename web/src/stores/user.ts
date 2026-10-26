@@ -12,6 +12,7 @@ export interface UserProfile {
   description: string
   initials: string
   avatarColor: string
+  avatarUrl: string
 }
 
 export const AVAILABLE_USERS: Record<UserId, UserProfile> = {
@@ -23,6 +24,7 @@ export const AVAILABLE_USERS: Record<UserId, UserProfile> = {
     description: 'Crée les ordres, affecte les commandes et coordonne les départs des véhicules.',
     initials: 'DI',
     avatarColor: 'from-emerald-500 to-teal-600',
+    avatarUrl: 'https://api.dicebear.com/10.x/initials/svg?seed=Diane',
   },
   eric: {
     id: 'eric',
@@ -32,6 +34,7 @@ export const AVAILABLE_USERS: Record<UserId, UserProfile> = {
     description: 'Supervise les tournées, valide officiellement les ordres et contrôle les flux.',
     initials: 'ER',
     avatarColor: 'from-emerald-700 to-emerald-950',
+    avatarUrl: 'https://api.dicebear.com/10.x/initials/svg?seed=Eric',
   },
 }
 

@@ -63,19 +63,21 @@ watch(
 async function loadData() {
   isLoadingVehicles.value = true
   try {
-    const [vehicles, transports] = await Promise.all([
+    const [vehicles, transportsRes] = await Promise.all([
       vehiclesApi.getActive(),
-      transportOrdersApi.getAll({ status: 0 }),
+      transportOrdersApi.getAll({ status: 0, limit: 100 }),
     ])
     activeVehicles.value = vehicles
     if (vehicles.length > 0 && !selectedVehicleCode.value) {
       selectedVehicleCode.value = vehicles[0].code
     }
 
+    const transports = transportsRes.data
     draftTransports.value = transports
     if (transports.length > 0 && !selectedDraftNo.value) {
       selectedDraftNo.value = transports[0].no
     }
+
   } catch (err: any) {
     errorMessage.value = err.message || 'Erreur lors du chargement des véhicules.'
   } finally {

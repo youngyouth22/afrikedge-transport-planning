@@ -11,7 +11,9 @@ import {
   CheckCircle2,
   MapPin,
   Inbox,
+  FileText,
 } from '@lucide/vue'
+import TablePill from '@/components/shared/TablePill.vue'
 
 const props = defineProps<{
   open: boolean
@@ -45,14 +47,15 @@ watch(
 async function loadOrders() {
   isLoading.value = true
   try {
-    const list = await salesOrdersApi.getToPlan()
-    availableOrders.value = list
+    const res = await salesOrdersApi.getToPlan(undefined, 1, 100)
+    availableOrders.value = res.data
   } catch (err: any) {
     errorMessage.value = err.message || 'Impossible de charger les commandes disponibles.'
   } finally {
     isLoading.value = false
   }
 }
+
 
 function toggleSelect(no: string) {
   const next = new Set(selectedNos.value)
@@ -192,7 +195,7 @@ async function handleConfirm() {
           v-for="order in availableOrders"
           :key="order.salesOrderNo"
           @click="toggleSelect(order.salesOrderNo)"
-          class="flex items-center justify-between p-3.5 hover:bg-muted/40 cursor-pointer transition text-xs"
+          class="flex items-center justify-between p-3.5 hover:bg-accent/40 cursor-pointer transition text-xs"
           :class="{ 'bg-emerald-500/10 dark:bg-emerald-950/30': selectedNos.has(order.salesOrderNo) }"
         >
           <div class="flex items-center gap-3">
@@ -200,20 +203,24 @@ async function handleConfirm() {
               type="checkbox"
               :checked="selectedNos.has(order.salesOrderNo)"
               @click.stop="toggleSelect(order.salesOrderNo)"
-              class="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+              class="w-[20px] h-[20px] border !border-Mgray400 rounded-[4px] accent-emerald-600 cursor-pointer"
             />
-            <div>
-              <div class="font-bold text-foreground">{{ order.salesOrderNo }}</div>
-              <div class="text-[11px] text-muted-foreground">{{ order.customerName }}</div>
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+                <FileText class="h-3.5 w-3.5 text-Mtexttextsecondary" />
+              </div>
+              <div>
+                <div class="font-medium text__16 text-Mtexttextprimary">{{ order.salesOrderNo }}</div>
+                <div class="text-xs text-Mtexttextsecondary">{{ order.customerName }}</div>
+              </div>
             </div>
           </div>
 
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <MapPin class="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-              <span>{{ order.deliveryCity }}</span>
-            </div>
-            <div class="font-bold text-foreground">
+            <TablePill :icon="MapPin" icon-class="text-Mmaincolorgreen">
+              {{ order.deliveryCity }}
+            </TablePill>
+            <div class="font-medium text__14 text-Mtexttextprimary">
               {{ order.totalWeightKg.toLocaleString('fr-FR') }} kg
             </div>
           </div>

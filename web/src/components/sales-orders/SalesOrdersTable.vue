@@ -3,6 +3,9 @@ import { computed } from 'vue'
 import { useSalesOrdersStore } from '@/stores/sales-orders'
 import type { SalesOrderToPlan } from '@/api/sales-orders.api'
 import { MapPin, Weight, FileText } from '@lucide/vue'
+import DataTableCustom from '@/components/shared/DataTableCustom.vue'
+import TablePill from '@/components/shared/TablePill.vue'
+import TableStatusBadge from '@/components/shared/TableStatusBadge.vue'
 
 const store = useSalesOrdersStore()
 
@@ -20,94 +23,105 @@ function toggleSelectAll() {
 }
 
 function handleRowClick(order: SalesOrderToPlan) {
-  store.toggleSelection(order.salesOrderNo)
+  store.toggleSelection(order)
 }
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
-        <thead class="border-b border-border bg-muted/50 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
-          <tr>
-            <th class="w-12 px-4 py-3.5 text-center">
-              <input
-                type="checkbox"
-                :checked="isAllSelected"
-                :indeterminate="isSomeSelected"
-                @change="toggleSelectAll"
-                class="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-background cursor-pointer"
-              />
-            </th>
-            <th class="px-4 py-3.5">Numéro</th>
-            <th class="px-4 py-3.5">Client</th>
-            <th class="px-4 py-3.5">Ville</th>
-            <th class="px-4 py-3.5 text-right">Poids (kg)</th>
-            <th class="px-4 py-3.5 text-center">Statut</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          <tr
-            v-for="order in store.filteredOrders"
-            :key="order.salesOrderNo"
-            @click="handleRowClick(order)"
-            class="group cursor-pointer transition-colors"
-            :class="[
-              store.selectedOrderNos.has(order.salesOrderNo)
-                ? 'bg-emerald-500/10 dark:bg-emerald-950/30'
-                : 'hover:bg-muted/40',
-            ]"
-          >
-            <!-- Checkbox -->
-            <td class="w-12 px-4 py-3.5 text-center" @click.stop>
-              <input
-                type="checkbox"
-                :checked="store.selectedOrderNos.has(order.salesOrderNo)"
-                @change="store.toggleSelection(order.salesOrderNo)"
-                class="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-background cursor-pointer"
-              />
-            </td>
+  <DataTableCustom>
+    <template #header>
+      <tr>
+        <th class="w-12 px-4 py-3.5 text-center">
+          <input
+            type="checkbox"
+            :checked="isAllSelected"
+            :indeterminate="isSomeSelected"
+            @change="toggleSelectAll"
+            class="w-[20px] h-[20px] border !border-Mgray400 rounded-[4px] accent-emerald-600 cursor-pointer"
+            aria-label="Sélectionner toutes les commandes"
+          />
+        </th>
+        <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Commande
+        </th>
+        <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Client
+        </th>
+        <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Ville de livraison
+        </th>
+        <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-right">
+          Poids
+        </th>
+        <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
+          Statut
+        </th>
+      </tr>
+    </template>
 
-            <!-- Numéro -->
-            <td class="px-4 py-3.5">
-              <div class="flex items-center gap-2">
-                <FileText class="h-3.5 w-3.5 text-muted-foreground" />
-                <span class="font-bold text-foreground">{{ order.salesOrderNo }}</span>
-              </div>
-            </td>
+    <tr
+      v-for="order in store.filteredOrders"
+      :key="order.salesOrderNo"
+      @click="handleRowClick(order)"
+      class="group cursor-pointer transition-colors"
+      :class="[
+        store.selectedOrderNos.has(order.salesOrderNo)
+          ? 'bg-emerald-500/10 dark:bg-emerald-950/30'
+          : 'hover:bg-accent/40',
+      ]"
+    >
+      <!-- Checkbox -->
+      <td class="w-12 px-4 py-3 text-center" @click.stop>
+        <input
+          type="checkbox"
+          :checked="store.selectedOrderNos.has(order.salesOrderNo)"
+          @change="store.toggleSelection(order)"
+          class="w-[20px] h-[20px] border !border-Mgray400 rounded-[4px] accent-emerald-600 cursor-pointer"
+          :aria-label="`Sélectionner commande ${order.salesOrderNo}`"
+        />
+      </td>
 
-            <!-- Client -->
-            <td class="px-4 py-3.5">
-              <div class="font-semibold text-foreground">{{ order.customerName }}</div>
-              <div class="text-[10px] text-muted-foreground">Code : {{ order.customerNo }}</div>
-            </td>
 
-            <!-- Ville -->
-            <td class="px-4 py-3.5">
-              <div class="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 text-[11px] font-medium text-foreground">
-                <MapPin class="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                <span>{{ order.deliveryCity }}</span>
-              </div>
-            </td>
+      <!-- Commande -->
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+            <FileText class="h-4 w-4 text-Mtexttextsecondary" />
+          </div>
+          <div>
+            <h5 class="font-medium text__16 text-Mtexttextprimary">{{ order.salesOrderNo }}</h5>
+            <p class="text__14 text-Mtexttextsecondary">Réf. Cde</p>
+          </div>
+        </div>
+      </td>
 
-            <!-- Poids -->
-            <td class="px-4 py-3.5 text-right">
-              <div class="inline-flex items-center gap-1 font-bold text-foreground">
-                <Weight class="h-3 w-3 text-muted-foreground" />
-                <span>{{ order.totalWeightKg.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}</span>
-                <span class="text-[10px] font-normal text-muted-foreground">kg</span>
-              </div>
-            </td>
+      <!-- Client -->
+      <td class="px-4 py-3">
+        <div class="font-medium text__14 text-Mtexttextprimary">{{ order.customerName }}</div>
+        <div class="text-xs text-Mtexttextsecondary">Code : {{ order.customerNo }}</div>
+      </td>
 
-            <!-- Statut -->
-            <td class="px-4 py-3.5 text-center">
-              <span class="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
-                À planifier
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+      <!-- Ville (Pill style comme Category) -->
+      <td class="px-4 py-3">
+        <TablePill :icon="MapPin" icon-class="text-Mmaincolorgreen">
+          {{ order.deliveryCity }}
+        </TablePill>
+      </td>
+
+      <!-- Poids -->
+      <td class="px-4 py-3 text-right">
+        <div class="inline-flex items-center gap-1.5 font-medium text__14 text-Mtexttextprimary">
+          <Weight class="h-3.5 w-3.5 text-Mtexttextsecondary" />
+          <span>{{ order.totalWeightKg.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }} kg</span>
+        </div>
+      </td>
+
+      <!-- Statut (Badge pastel) -->
+      <td class="px-4 py-3 text-center">
+        <TableStatusBadge variant="success">
+          À planifier
+        </TableStatusBadge>
+      </td>
+    </tr>
+  </DataTableCustom>
 </template>

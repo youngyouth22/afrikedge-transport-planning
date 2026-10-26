@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useLayoutStore } from '@/stores/layout'
 import {
   ClipboardList,
   Truck,
   Boxes,
-  ShieldCheck,
-  ChevronRight,
   LogOut,
+  X,
 } from '@lucide/vue'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
+const layoutStore = useLayoutStore()
 
 const navigation = [
   {
     name: 'Commandes à planifier',
     to: '/sales-orders',
     icon: ClipboardList,
-    description: 'Affectation des commandes',
   },
   {
     name: 'Ordres de transport',
     to: '/transport-orders',
     icon: Truck,
-    description: 'Brouillons, validés et départs',
   },
 ]
 
@@ -34,79 +34,90 @@ function isActive(path: string) {
   }
   return route.path === path
 }
+
+function handleNavClick() {
+  layoutStore.closeSidebar()
+}
+
+function handleLogout() {
+  userStore.clearUser()
+  layoutStore.closeSidebar()
+  router.push('/select-user')
+}
 </script>
 
 <template>
-  <aside class="flex h-screen w-64 flex-col border-r border-border bg-card">
-    <!-- Top Branding -->
-    <div class="flex h-16 items-center gap-3 border-b border-border px-6">
-      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-        <Boxes class="h-5 w-5" />
-      </div>
-      <div>
-        <h1 class="text-sm font-bold tracking-tight text-foreground">TRANSIT</h1>
-        <p class="text-[11px] font-medium text-muted-foreground">Afrikedge Logistics</p>
-      </div>
-    </div>
+  <!-- Mobile Backdrop Overlay -->
+  <div
+    v-if="layoutStore.isSidebarOpen"
+    class="fixed inset-0 z-90 bg-black/40 backdrop-blur-xs lg:hidden transition-opacity"
+    @click="layoutStore.closeSidebar()"
+  />
 
-    <!-- Navigation List -->
-    <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-      <div>
-        <h2 class="px-3 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-          Opérations
+  <aside
+    class="w-62 h-dvh md:h-screen bg-Msurfacesurfacesecondary border-r border-Mborderborderprimary! fixed z-99 top-0 px-3 py-6 transition-all duration-300 lg:left-0 flex flex-col justify-between"
+    :class="[layoutStore.isSidebarOpen ? 'left-0 shadow-2xl' : '-left-100']"
+  >
+    <!-- Top Branding & Navigation -->
+    <div class="flex flex-col flex-1 min-h-0">
+      <!-- Top Branding -->
+      <div class="flex items-center justify-between pb-4 px-2">
+        <div class="flex items-center gap-2.5">
+          <Boxes class="h-8 w-auto text-Mmaincolorgreen" />
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-foreground">TRANSIT</h1>
+            <p class="text-sm font-medium text-muted-foreground">Afrikedge Logistics</p>
+          </div>
+        </div>
+
+        <!-- Mobile Close Button -->
+        <button
+          type="button"
+          @click="layoutStore.closeSidebar()"
+          class="lg:hidden rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition cursor-pointer"
+          aria-label="Fermer le menu"
+        >
+          <X class="h-4 w-4" />
+        </button>
+      </div>
+
+      <!-- Navigation List -->
+      <div class="flex-1 overflow-y-auto py-4">
+        <h2 class="px-3 pb-2 text-[10px] font-bold tracking-wider text-Mtexttextsecondary uppercase">
+          OPÉRATIONS
         </h2>
-        <nav class="mt-2 space-y-1">
+        <div class="grid grid-cols-1 gap-2">
           <router-link
             v-for="item in navigation"
             :key="item.to"
             :to="item.to"
-            class="group flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-all"
+            @click="handleNavClick"
+            class="pl-3 pr-4 py-2 flex items-center gap-3 transition-colors rounded-r-md cursor-pointer"
             :class="[
               isActive(item.to)
-                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold border border-emerald-500/20'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                ? 'bg-white dark:bg-card border-l-2 border-Mmaincolorgreen text-Mtexttextprimary font-medium'
+                : 'text-Mtexttextsecondary hover:text-foreground hover:bg-white/40 dark:hover:bg-accent/40 font-medium',
             ]"
           >
-            <div class="flex items-center gap-3">
-              <component
-                :is="item.icon"
-                class="h-4 w-4 shrink-0 transition-colors"
-                :class="isActive(item.to) ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'"
-              />
-              <span>{{ item.name }}</span>
+            <div class="text-Mtexttextsecondary">
+              <component :is="item.icon" class="h-5 w-5 shrink-0" />
             </div>
-            <ChevronRight
-              class="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100"
-              :class="{ 'opacity-100 text-primary': isActive(item.to) }"
-            />
+            <p class="font-medium text__16">{{ item.name }}</p>
           </router-link>
-        </nav>
+        </div>
       </div>
     </div>
 
-    <!-- Bottom User Section -->
-    <div class="border-t border-border p-4">
-      <div class="flex items-center justify-between rounded-xl bg-accent/50 p-2.5">
-        <div class="flex items-center gap-2.5">
-          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary font-bold text-xs text-primary-foreground shadow-sm">
-            {{ userStore.currentUser.initials }}
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-bold text-foreground leading-none">{{ userStore.currentUser.name }}</span>
-              <ShieldCheck v-if="userStore.isLogisticsManager" class="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <span class="text-[10px] text-muted-foreground leading-none">{{ userStore.currentUser.role }}</span>
-          </div>
+    <!-- Bottom Action (Logout) -->
+    <div class="pt-3">
+      <div
+        @click="handleLogout"
+        class="cursor-pointer pl-3 pr-4 py-2 flex items-center gap-3 text-Mtexttextprimary hover:bg-white/40 dark:hover:bg-accent/40 rounded-r-md transition-colors"
+      >
+        <div class="text-Mtexttextsecondary">
+          <LogOut class="h-5 w-5 shrink-0" />
         </div>
-
-        <router-link
-          to="/select-user"
-          title="Changer d'utilisateur"
-          class="rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground transition"
-        >
-          <LogOut class="h-4 w-4" />
-        </router-link>
+        <p class="font-medium text__16">Se déconnecter</p>
       </div>
     </div>
   </aside>

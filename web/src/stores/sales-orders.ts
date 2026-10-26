@@ -2,25 +2,36 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { salesOrdersApi, type SalesOrderToPlan } from '../api/sales-orders.api'
 
+const KNOWN_CITIES = ['Bafoussam', 'Douala', 'Edéa', 'Kribi', 'Limbé', 'Yaoundé']
+
 export const useSalesOrdersStore = defineStore('salesOrders', () => {
   const orders = ref<SalesOrderToPlan[]>([])
   const isLoading = ref<boolean>(false)
   const error = ref<string | null>(null)
 
+  // Pagination
+  const page = ref<number>(1)
+  const limit = ref<number>(10)
+  const total = ref<number>(0)
+  const totalPages = ref<number>(0)
+
+  // Filtres
   const cityFilter = ref<string>('all')
   const searchQuery = ref<string>('')
-  const selectedOrderNos = ref<Set<string>>(new Set())
 
-  // Récupérer les villes uniques disponibles dans les commandes
+  // Map persistant pour conserver les sélections à travers toutes les pages
+  const selectedOrdersMap = ref<Map<string, SalesOrderToPlan>>(new Map())
+
+  // Liste des villes disponibles pour le filtre
   const availableCities = computed(() => {
-    const cities = new Set<string>()
+    const cities = new Set<string>(KNOWN_CITIES)
     orders.value.forEach((order) => {
       if (order.deliveryCity) cities.add(order.deliveryCity)
     })
     return Array.from(cities).sort()
   })
 
-  // Commandes filtrées côté client par recherche textuelle
+  // Commandes filtrées côté client par recherche textuelle sur la page courante
   const filteredOrders = computed(() => {
     let result = orders.value
 
@@ -37,30 +48,29 @@ export const useSalesOrdersStore = defineStore('salesOrders', () => {
     return result
   })
 
-  // Commandes sélectionnées
-  const selectedOrders = computed(() =>
-    orders.value.filter((o) => selectedOrderNos.value.has(o.salesOrderNo)),
-  )
-
-  const selectedCount = computed(() => selectedOrderNos.value.size)
+  // Commandes sélectionnées (toutes pages confondues)
+  const selectedOrders = computed(() => Array.from(selectedOrdersMap.value.values()))
+  const selectedOrderNos = computed(() => new Set(selectedOrdersMap.value.keys()))
+  const selectedCount = computed(() => selectedOrdersMap.value.size)
 
   const selectedTotalWeight = computed(() => {
-    const total = selectedOrders.value.reduce((sum, o) => sum + o.totalWeightKg, 0)
-    return Math.round(total * 100) / 100
+    const sum = selectedOrders.value.reduce((total, o) => total + o.totalWeightKg, 0)
+    return Math.round(sum * 100) / 100
   })
 
   async function fetchOrders() {
     isLoading.value = true
     error.value = null
     try {
-      orders.value = await salesOrdersApi.getToPlan(
+      const res = await salesOrdersApi.getToPlan(
         cityFilter.value === 'all' ? undefined : cityFilter.value,
+        page.value,
+        limit.value,
       )
-      // Nettoyer les sélections qui ne sont plus dans les résultats
-      const validNos = new Set(orders.value.map((o) => o.salesOrderNo))
-      selectedOrderNos.value = new Set(
-        Array.from(selectedOrderNos.value).filter((no) => validNos.has(no)),
-      )
+      orders.value = res.data
+      total.value = res.total
+      totalPages.value = res.totalPages
+      page.value = res.page
     } catch (err: any) {
       error.value = err.message || 'Impossible de charger les commandes à planifier.'
     } finally {
@@ -68,41 +78,72 @@ export const useSalesOrdersStore = defineStore('salesOrders', () => {
     }
   }
 
-  function toggleSelection(salesOrderNo: string) {
-    const next = new Set(selectedOrderNos.value)
-    if (next.has(salesOrderNo)) {
-      next.delete(salesOrderNo)
+  function toggleSelection(order: SalesOrderToPlan) {
+    const next = new Map(selectedOrdersMap.value)
+    if (next.has(order.salesOrderNo)) {
+      next.delete(order.salesOrderNo)
     } else {
-      next.add(salesOrderNo)
+      next.set(order.salesOrderNo, order)
     }
-    selectedOrderNos.value = next
+    selectedOrdersMap.value = next
   }
 
   function selectAllCurrent(select: boolean) {
-    if (!select) {
-      selectedOrderNos.value = new Set()
-      return
+    const next = new Map(selectedOrdersMap.value)
+    if (select) {
+      filteredOrders.value.forEach((o) => next.set(o.salesOrderNo, o))
+    } else {
+      filteredOrders.value.forEach((o) => next.delete(o.salesOrderNo))
     }
-    const next = new Set(selectedOrderNos.value)
-    filteredOrders.value.forEach((o) => next.add(o.salesOrderNo))
-    selectedOrderNos.value = next
+    selectedOrdersMap.value = next
   }
 
   function clearSelection() {
-    selectedOrderNos.value = new Set()
+    selectedOrdersMap.value = new Map()
   }
 
   function setCityFilter(city: string) {
     cityFilter.value = city
+    page.value = 1 // Réinitialisation de la page lors du changement de filtre ville
     fetchOrders()
+  }
+
+  function setPage(newPage: number) {
+    if (newPage >= 1 && (totalPages.value === 0 || newPage <= totalPages.value)) {
+      page.value = newPage
+      fetchOrders()
+    }
+  }
+
+  function setLimit(newLimit: number) {
+    limit.value = newLimit
+    page.value = 1
+    fetchOrders()
+  }
+
+  function prevPage() {
+    if (page.value > 1) {
+      setPage(page.value - 1)
+    }
+  }
+
+  function nextPage() {
+    if (page.value < totalPages.value) {
+      setPage(page.value + 1)
+    }
   }
 
   return {
     orders,
     isLoading,
     error,
+    page,
+    limit,
+    total,
+    totalPages,
     cityFilter,
     searchQuery,
+    selectedOrdersMap,
     selectedOrderNos,
     availableCities,
     filteredOrders,
@@ -114,5 +155,10 @@ export const useSalesOrdersStore = defineStore('salesOrders', () => {
     selectAllCurrent,
     clearSelection,
     setCityFilter,
+    setPage,
+    setLimit,
+    prevPage,
+    nextPage,
   }
 })
+

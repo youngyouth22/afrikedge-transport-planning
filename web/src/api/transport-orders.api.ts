@@ -35,13 +35,21 @@ export interface TransportOrderDetail {
   orders: TransportOrderLineDetail[]
 }
 
+export interface PaginatedTransportOrdersResponse {
+  data: TransportOrderSummary[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export const transportOrdersApi = {
   async getAll(filters?: {
     status?: number
     date?: string
     page?: number
     limit?: number
-  }): Promise<TransportOrderSummary[]> {
+  }): Promise<PaginatedTransportOrdersResponse> {
     const params = new URLSearchParams()
     if (filters?.status !== undefined && filters.status !== null) {
       params.set('status', String(filters.status))
@@ -57,8 +65,9 @@ export const transportOrdersApi = {
     }
 
     const queryString = params.toString() ? `?${params.toString()}` : ''
-    return apiFetch<TransportOrderSummary[]>(`/transport-orders${queryString}`)
+    return apiFetch<PaginatedTransportOrdersResponse>(`/transport-orders${queryString}`)
   },
+
 
   async getOne(no: string): Promise<TransportOrderDetail> {
     return apiFetch<TransportOrderDetail>(`/transport-orders/${encodeURIComponent(no)}`)

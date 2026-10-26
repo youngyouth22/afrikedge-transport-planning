@@ -2,6 +2,8 @@
 import { useRouter } from 'vue-router'
 import { useTransportOrdersStore } from '@/stores/transport-orders'
 import TransportStatusBadge from './TransportStatusBadge.vue'
+import DataTableCustom from '@/components/shared/DataTableCustom.vue'
+import TablePill from '@/components/shared/TablePill.vue'
 import { Truck, Calendar, ChevronRight, Boxes } from '@lucide/vue'
 
 const router = useRouter()
@@ -18,99 +20,114 @@ function getFillRatio(totalKg: number, capacityKg: number) {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
-        <thead class="border-b border-border bg-muted/50 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
-          <tr>
-            <th class="px-5 py-3.5">Numéro d'ordre</th>
-            <th class="px-5 py-3.5">Véhicule</th>
-            <th class="px-5 py-3.5">Date de livraison</th>
-            <th class="px-5 py-3.5 text-center">Commandes</th>
-            <th class="px-5 py-3.5">Remplissage / Capacité</th>
-            <th class="px-5 py-3.5 text-center">Statut</th>
-            <th class="w-10 px-5 py-3.5 text-right"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          <tr
-            v-for="order in store.filteredOrders"
-            :key="order.no"
-            @click="navigateToDetail(order.no)"
-            class="group cursor-pointer hover:bg-muted/40 transition-colors"
-          >
-            <!-- Numéro -->
-            <td class="px-5 py-4">
-              <div class="font-extrabold text-foreground text-sm group-hover:text-primary transition-colors">
-                {{ order.no }}
-              </div>
-              <div class="text-[10px] text-muted-foreground">Créé par {{ order.createdBy }}</div>
-            </td>
+  <DataTableCustom>
+    <template #header>
+      <tr>
+        <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Ordre de transport
+        </th>
+        <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Véhicule
+        </th>
+        <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Date de livraison
+        </th>
+        <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
+          Commandes
+        </th>
+        <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+          Remplissage / Capacité
+        </th>
+        <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
+          Statut
+        </th>
+        <th class="w-12 px-5 py-3.5 text-right"></th>
+      </tr>
+    </template>
 
-            <!-- Véhicule -->
-            <td class="px-5 py-4">
-              <div class="flex items-center gap-2">
-                <Truck class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <div class="font-bold text-foreground">{{ order.vehicleCode }}</div>
-                  <div class="text-[10px] text-muted-foreground font-mono">{{ order.vehiclePlateNo }}</div>
-                </div>
-              </div>
-            </td>
+    <tr
+      v-for="order in store.filteredOrders"
+      :key="order.no"
+      @click="navigateToDetail(order.no)"
+      class="group cursor-pointer hover:bg-accent/40 transition-colors"
+    >
+      <!-- Numéro de transport -->
+      <td class="px-5 py-3.5">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+            <Truck class="h-4 w-4 text-Mtexttextsecondary" />
+          </div>
+          <div>
+            <h5 class="font-medium text__16 text-Mtexttextprimary group-hover:text-primary transition-colors">
+              {{ order.no }}
+            </h5>
+            <p class="text__14 text-Mtexttextsecondary">Créé par {{ order.createdBy }}</p>
+          </div>
+        </div>
+      </td>
 
-            <!-- Date -->
-            <td class="px-5 py-4">
-              <div class="inline-flex items-center gap-1.5 font-medium text-foreground">
-                <Calendar class="h-3.5 w-3.5 text-muted-foreground" />
-                <span>{{ order.deliveryDate }}</span>
-              </div>
-            </td>
+      <!-- Véhicule -->
+      <td class="px-5 py-3.5">
+        <div class="space-y-1">
+          <TablePill :icon="Truck" icon-class="text-Mmaincolorgreen">
+            {{ order.vehicleCode }}
+          </TablePill>
+          <div class="text-xs text-Mtexttextsecondary font-mono pl-0.5">
+            {{ order.vehiclePlateNo }}
+          </div>
+        </div>
+      </td>
 
-            <!-- Nombre de commandes -->
-            <td class="px-5 py-4 text-center">
-              <div class="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-foreground">
-                <Boxes class="h-3 w-3 text-muted-foreground" />
-                <span>{{ order.ordersCount }}</span>
-              </div>
-            </td>
+      <!-- Date de livraison -->
+      <td class="px-5 py-3.5">
+        <TablePill :icon="Calendar" icon-class="text-Mtexttextsecondary">
+          {{ order.deliveryDate }}
+        </TablePill>
+      </td>
 
-            <!-- Jauge remplissage -->
-            <td class="px-5 py-4 min-w-[200px]">
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-[11px]">
-                  <span class="font-bold text-foreground">
-                    {{ order.totalWeightKg.toLocaleString('fr-FR') }} / {{ order.vehicleCapacityKg.toLocaleString('fr-FR') }} kg
-                  </span>
-                  <span class="font-semibold text-muted-foreground">
-                    {{ getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) }} %
-                  </span>
-                </div>
-                <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    class="h-full rounded-full transition-all duration-300"
-                    :class="[
-                      getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) >= 90
-                        ? 'bg-amber-500'
-                        : 'bg-primary',
-                    ]"
-                    :style="{ width: `${getFillRatio(order.totalWeightKg, order.vehicleCapacityKg)}%` }"
-                  />
-                </div>
-              </div>
-            </td>
+      <!-- Nombre de commandes -->
+      <td class="px-5 py-3.5 text-center">
+        <TablePill :icon="Boxes" icon-class="text-Mtexttextsecondary">
+          {{ order.ordersCount }}
+        </TablePill>
+      </td>
 
-            <!-- Statut -->
-            <td class="px-5 py-4 text-center">
-              <TransportStatusBadge :status="order.status" />
-            </td>
+      <!-- Jauge remplissage -->
+      <td class="px-5 py-3.5 min-w-[210px]">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-medium text-Mtexttextprimary text__14">
+              {{ order.totalWeightKg.toLocaleString('fr-FR') }} / {{ order.vehicleCapacityKg.toLocaleString('fr-FR') }} kg
+            </span>
+            <span class="font-semibold text-Mtexttextsecondary">
+              {{ getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) }} %
+            </span>
+          </div>
+          <div class="h-2 w-full overflow-hidden rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary">
+            <div
+              class="h-full rounded-full transition-all duration-300"
+              :class="[
+                getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) >= 90
+                  ? 'bg-amber-500'
+                  : 'bg-Mmaincolorgreen',
+              ]"
+              :style="{ width: `${getFillRatio(order.totalWeightKg, order.vehicleCapacityKg)}%` }"
+            />
+          </div>
+        </div>
+      </td>
 
-            <!-- Flèche action -->
-            <td class="px-5 py-4 text-right">
-              <ChevronRight class="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-foreground" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+      <!-- Statut -->
+      <td class="px-5 py-3.5 text-center">
+        <TransportStatusBadge :status="order.status" />
+      </td>
+
+      <!-- Actions -->
+      <td class="px-5 py-3.5 text-right">
+        <div class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-Mtexttextsecondary group-hover:text-foreground group-hover:bg-accent transition-colors">
+          <ChevronRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </div>
+      </td>
+    </tr>
+  </DataTableCustom>
 </template>

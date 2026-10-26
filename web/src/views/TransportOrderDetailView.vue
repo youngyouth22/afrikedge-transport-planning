@@ -6,6 +6,9 @@ import TransportStatusBadge from '@/components/transport-orders/TransportStatusB
 import CapacityGauge from '@/components/transport-orders/CapacityGauge.vue'
 import AddLinesModal from '@/components/transport-orders/AddLinesModal.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
+import DataTableCustom from '@/components/shared/DataTableCustom.vue'
+import TablePill from '@/components/shared/TablePill.vue'
+import TableStatusBadge from '@/components/shared/TableStatusBadge.vue'
 import { transportOrdersApi, type TransportOrderDetail } from '@/api/transport-orders.api'
 import { useUserStore } from '@/stores/user'
 import { toast } from 'vue-sonner'
@@ -20,6 +23,7 @@ import {
   Loader2,
   Boxes,
   MapPin,
+  FileText,
 } from '@lucide/vue'
 
 const route = useRoute()
@@ -292,7 +296,7 @@ async function handleDepart() {
           </div>
         </div>
 
-        <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div class="overflow-hidden border !border-Mborderborderprimary bg-card shadow-xs">
           <div v-if="order.orders.length === 0" class="p-12 text-center space-y-3">
             <Boxes class="h-10 w-10 text-muted-foreground mx-auto" />
             <div class="text-sm font-bold text-foreground">Aucune commande affectée à cet ordre</div>
@@ -310,76 +314,87 @@ async function handleDepart() {
             </button>
           </div>
 
-          <table v-else class="w-full text-left text-xs">
-            <thead class="border-b border-border bg-muted/50 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
+          <DataTableCustom v-else>
+            <template #header>
               <tr>
-                <th class="px-5 py-3.5">Numéro</th>
-                <th class="px-5 py-3.5">Client</th>
-                <th class="px-5 py-3.5">Ville</th>
-                <th class="px-5 py-3.5 text-right">Poids (kg)</th>
-                <th class="px-5 py-3.5 text-center">Statut commande</th>
-                <th v-if="order.status === 0" class="w-16 px-5 py-3.5 text-right">Action</th>
+                <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+                  Commande
+                </th>
+                <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+                  Client
+                </th>
+                <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
+                  Ville
+                </th>
+                <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-right">
+                  Poids
+                </th>
+                <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
+                  Statut
+                </th>
+                <th v-if="order.status === 0" class="w-16 px-5 py-3.5 text-right"></th>
               </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="line in order.orders"
-                :key="line.salesOrderNo"
-                class="hover:bg-muted/30 transition-colors"
-              >
-                <!-- Numéro -->
-                <td class="px-5 py-3.5 font-bold text-foreground">
-                  {{ line.salesOrderNo }}
-                </td>
+            </template>
 
-                <!-- Client -->
-                <td class="px-5 py-3.5">
-                  <div class="font-semibold text-foreground">{{ line.customerName }}</div>
-                  <div class="text-[10px] text-muted-foreground">Code : {{ line.customerNo }}</div>
-                </td>
-
-                <!-- Ville -->
-                <td class="px-5 py-3.5">
-                  <div class="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 text-[11px] font-medium text-foreground">
-                    <MapPin class="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                    <span>{{ line.deliveryCity }}</span>
+            <tr
+              v-for="line in order.orders"
+              :key="line.salesOrderNo"
+              class="hover:bg-accent/40 transition-colors"
+            >
+              <!-- Numéro -->
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+                    <FileText class="h-4 w-4 text-Mtexttextsecondary" />
                   </div>
-                </td>
+                  <div>
+                    <h5 class="font-medium text__16 text-Mtexttextprimary">{{ line.salesOrderNo }}</h5>
+                    <p class="text__14 text-Mtexttextsecondary">Ligne transport</p>
+                  </div>
+                </div>
+              </td>
 
-                <!-- Poids -->
-                <td class="px-5 py-3.5 text-right font-bold text-foreground">
+              <!-- Client -->
+              <td class="px-5 py-3">
+                <div class="font-medium text__14 text-Mtexttextprimary">{{ line.customerName }}</div>
+                <div class="text-xs text-Mtexttextsecondary">Code : {{ line.customerNo }}</div>
+              </td>
+
+              <!-- Ville -->
+              <td class="px-5 py-3">
+                <TablePill :icon="MapPin" icon-class="text-Mmaincolorgreen">
+                  {{ line.deliveryCity }}
+                </TablePill>
+              </td>
+
+              <!-- Poids -->
+              <td class="px-5 py-3 text-right">
+                <span class="font-medium text__14 text-Mtexttextprimary">
                   {{ line.totalWeightKg.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }} kg
-                </td>
+                </span>
+              </td>
 
-                <!-- Statut de la commande -->
-                <td class="px-5 py-3.5 text-center">
-                  <span
-                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold border"
-                    :class="[
-                      line.status === 1
-                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800'
-                        : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-800',
-                    ]"
-                  >
-                    {{ line.status === 1 ? 'Planifiée' : 'En livraison' }}
-                  </span>
-                </td>
+              <!-- Statut de la commande -->
+              <td class="px-5 py-3 text-center">
+                <TableStatusBadge :variant="line.status === 1 ? 'warning' : 'info'">
+                  {{ line.status === 1 ? 'Planifiée' : 'En livraison' }}
+                </TableStatusBadge>
+              </td>
 
-                <!-- Action Retrait (si brouillon) -->
-                <td v-if="order.status === 0" class="px-5 py-3.5 text-right">
-                  <button
-                    type="button"
-                    @click="handleRemoveLine(line.salesOrderNo)"
-                    :disabled="isActionLoading"
-                    title="Retirer du transport"
-                    class="inline-flex items-center justify-center h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
-                  >
-                    <Trash2 class="h-4 w-4" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              <!-- Action Retrait (si brouillon) -->
+              <td v-if="order.status === 0" class="px-5 py-3 text-right">
+                <button
+                  type="button"
+                  @click="handleRemoveLine(line.salesOrderNo)"
+                  :disabled="isActionLoading"
+                  title="Retirer du transport"
+                  class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-Mtexttextsecondary hover:text-Malertserror hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </button>
+              </td>
+            </tr>
+          </DataTableCustom>
         </div>
       </div>
 

@@ -50,21 +50,52 @@ describe('SalesOrdersService', () => {
   });
 
   it('should query sales orders with status 0 without city filter', async () => {
-    const orders = await service.findToPlan();
+    mockRequest.query
+      .mockResolvedValueOnce({ recordset: [{ total: 1 }] })
+      .mockResolvedValueOnce({
+        recordset: [
+          {
+            salesOrderNo: 'SO-1008',
+            customerNo: 'C0001',
+            customerName: 'Quincaillerie Ndokoti',
+            deliveryCity: 'Douala',
+            totalWeightKg: 430,
+            status: 0,
+          },
+        ],
+      });
+
+    const result = await service.findToPlan();
     expect(mockRequest.input).toHaveBeenCalledWith('status', 0);
-    expect(mockRequest.query).toHaveBeenCalledWith(
-      expect.stringContaining('WHERE so.[Status] = @status'),
-    );
-    expect(orders).toHaveLength(1);
-    expect(orders[0].salesOrderNo).toBe('SO-1008');
+    expect(result.data).toHaveLength(1);
+    expect(result.total).toBe(1);
+    expect(result.page).toBe(1);
+    expect(result.limit).toBe(10);
+    expect(result.totalPages).toBe(1);
+    expect(result.data[0].salesOrderNo).toBe('SO-1008');
   });
 
   it('should include city filter parameter when provided', async () => {
-    await service.findToPlan('Douala');
+    mockRequest.query
+      .mockResolvedValueOnce({ recordset: [{ total: 1 }] })
+      .mockResolvedValueOnce({
+        recordset: [
+          {
+            salesOrderNo: 'SO-1008',
+            customerNo: 'C0001',
+            customerName: 'Quincaillerie Ndokoti',
+            deliveryCity: 'Douala',
+            totalWeightKg: 430,
+            status: 0,
+          },
+        ],
+      });
+
+    const result = await service.findToPlan('Douala');
     expect(mockRequest.input).toHaveBeenCalledWith('status', 0);
     expect(mockRequest.input).toHaveBeenCalledWith('city', 'Douala');
-    expect(mockRequest.query).toHaveBeenCalledWith(
-      expect.stringContaining('AND so.[Delivery City] = @city'),
-    );
+    expect(result.data).toHaveLength(1);
+    expect(result.total).toBe(1);
   });
+
 });

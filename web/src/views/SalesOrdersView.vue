@@ -6,10 +6,11 @@ import SalesOrdersTable from '@/components/sales-orders/SalesOrdersTable.vue'
 import SelectionActionBar from '@/components/sales-orders/SelectionActionBar.vue'
 import AddToTransportModal from '@/components/sales-orders/AddToTransportModal.vue'
 import TableSkeleton from '@/components/shared/TableSkeleton.vue'
+import TablePagination from '@/components/shared/TablePagination.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
 import { useSalesOrdersStore } from '@/stores/sales-orders'
-import { PackageCheck, Weight, RefreshCw } from '@lucide/vue'
+import { RefreshCw } from '@lucide/vue'
 
 const store = useSalesOrdersStore()
 const isModalOpen = ref(false)
@@ -25,18 +26,18 @@ onMounted(() => {
       <!-- En-tête Métier et Cartes KPI -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+          <h2 class="text-4xl font-bold tracking-tight text-foreground sm:text-3xl mb-1">
             Commandes à planifier
           </h2>
-          <p class="text-xs text-muted-foreground mt-1">
-            Gérez le portefeuille des commandes en attente d'affectation et regroupez-les par transport.
-          </p>
+            <p class="text__16 text-Mtexttextsecondary">
+              Aperçu des commandes en attente de planification de transport.
+            </p>
         </div>
 
         <!-- KPI Cards -->
-        <div class="flex items-center gap-3">
+        <!-- <div class="flex items-center gap-3"> -->
           <!-- Carte À planifier -->
-          <div class="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm min-w-[150px]">
+          <!-- <div class="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm min-w-[150px]">
             <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <PackageCheck class="h-5 w-5" />
             </div>
@@ -45,13 +46,13 @@ onMounted(() => {
                 À planifier
               </div>
               <div class="text-xl font-extrabold text-foreground">
-                {{ store.filteredOrders.length }}
+                {{ store.total }}
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Carte Poids sélectionné -->
-          <div class="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm min-w-[170px]">
+          <!-- <div class="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm min-w-[170px]">
             <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <Weight class="h-5 w-5" />
             </div>
@@ -66,21 +67,27 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Bouton rafraîchir -->
-          <button
+          
+          
+        </div> -->
+      </div>
+
+      <!-- Barre de filtres et recherche -->
+       <div class="flex items-center xl:flex-nowrap! flex-wrap gap-3 relative z-2">
+<SalesOrdersFilters />
+<!-- Bouton rafraîchir -->
+<button
             type="button"
             @click="store.fetchOrders()"
             :disabled="store.isLoading"
             title="Rafraîchir les données"
-            class="flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition"
+            class="flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer"
           >
             <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': store.isLoading }" />
           </button>
-        </div>
-      </div>
 
-      <!-- Barre de filtres et recherche -->
-      <SalesOrdersFilters />
+       </div>
+      
 
       <!-- États de chargement, erreur et tableau -->
       <div v-if="store.isLoading" class="rounded-2xl border border-border bg-card shadow-sm">
@@ -101,7 +108,18 @@ onMounted(() => {
         @action="() => { store.searchQuery = ''; store.setCityFilter('all') }"
       />
 
-      <SalesOrdersTable v-else />
+      <div v-else class="space-y-4">
+        <SalesOrdersTable />
+        <TablePagination
+          :page="store.page"
+          :limit="store.limit"
+          :total="store.total"
+          :total-pages="store.totalPages"
+          :is-loading="store.isLoading"
+          @change-page="store.setPage"
+          @change-limit="store.setLimit"
+        />
+      </div>
 
       <!-- Barre d'action persistante au bas de l'écran lors d'une sélection -->
       <SelectionActionBar @open-assign-modal="isModalOpen = true" />
@@ -115,3 +133,4 @@ onMounted(() => {
     </div>
   </AppLayout>
 </template>
+

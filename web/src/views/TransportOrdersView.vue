@@ -4,9 +4,11 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import TransportOrdersTable from '@/components/transport-orders/TransportOrdersTable.vue'
 import CreateTransportModal from '@/components/transport-orders/CreateTransportModal.vue'
 import TableSkeleton from '@/components/shared/TableSkeleton.vue'
+import TablePagination from '@/components/shared/TablePagination.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
 import { useTransportOrdersStore } from '@/stores/transport-orders'
+
 import { Plus, Calendar, RefreshCw, X } from '@lucide/vue'
 
 const store = useTransportOrdersStore()
@@ -125,7 +127,19 @@ const statusOptions = [
         @action="isCreateModalOpen = true"
       />
 
-      <TransportOrdersTable v-else />
+      <div v-else class="space-y-4">
+        <TransportOrdersTable />
+        <TablePagination
+          :page="store.page"
+          :limit="store.limit"
+          :total="store.total"
+          :total-pages="store.totalPages"
+          :is-loading="store.isLoading"
+          @change-page="store.setPage"
+          @change-limit="store.setLimit"
+        />
+      </div>
+
 
       <!-- Dialogue de création d'ordre -->
       <CreateTransportModal

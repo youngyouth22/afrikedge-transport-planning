@@ -39,13 +39,20 @@ export function resolveUserFromHeader(userIdHeader?: string | string[]): UserCon
   const userId = Array.isArray(userIdHeader) ? userIdHeader[0] : userIdHeader;
   const normalizedId = userId?.trim().toLowerCase();
 
-  if (normalizedId && USERS[normalizedId]) {
-    return USERS[normalizedId];
+  if (normalizedId) {
+    const user = USERS[normalizedId];
+    if (user) {
+      return user;
+    }
+    throw new ForbiddenException(
+      `Utilisateur "${normalizedId}" non reconnu.`,
+    );
   }
 
-  // Diane par défaut si non spécifié, mais si fourni et inconnu on utilise le défaut
+  // Diane par défaut si l'en-tête est omis
   return USERS.diane;
 }
+
 
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): UserContext => {
