@@ -14,7 +14,7 @@ defineProps<{
     <AppSidebar />
 
     <!-- Main Content Area (Offset by fixed sidebar width and fixed header height) -->
-    <div class="flex min-h-screen flex-col lg:pl-[248px] pt-[70px] transition-all duration-300">
+    <div class="flex min-h-screen flex-col lg:pl-62 pt-17.5 transition-all duration-300">
       <AppHeader :title="title" :breadcrumbs="breadcrumbs" />
       <main class="flex-1 p-4 sm:p-6 lg:p-8">
         <slot />

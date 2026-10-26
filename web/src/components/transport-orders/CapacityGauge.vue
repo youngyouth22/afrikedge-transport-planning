@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Weight, AlertTriangle } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/i18n'
 
 const props = defineProps<{
   totalWeightKg: number
   capacityKg: number
 }>()
+
+const { t } = useI18n()
 
 const fillPercentage = computed(() => {
   if (props.capacityKg <= 0) return 0
@@ -37,27 +41,27 @@ const gaugeColor = computed(() => {
         </div>
         <div>
           <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Capacité du véhicule
+            {{ t('transportOrders.capacityGauge.title') }}
           </h3>
           <div class="text-2xl font-black text-foreground">
-            {{ fillPercentage }} % <span class="text-xs font-medium text-muted-foreground">utilisé</span>
+            {{ fillPercentage }} % <span class="text-xs font-medium text-muted-foreground">{{ t('transportOrders.capacityGauge.used') }}</span>
           </div>
         </div>
       </div>
 
       <div class="text-right">
-        <div class="text-xs text-muted-foreground">Poids restant</div>
+        <div class="text-xs text-muted-foreground">{{ t('transportOrders.capacityGauge.remainingWeight') }}</div>
         <div
           class="text-base font-extrabold"
           :class="isOver ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'"
         >
-          {{ remainingKg.toLocaleString('fr-FR') }} kg
+          {{ formatNumber(remainingKg) }} {{ t('common.kg') }}
         </div>
       </div>
     </div>
 
     <!-- Visual Progress Bar -->
-    <div class="h-4 w-full overflow-hidden  bg-muted/80 p-0.5">
+    <div class="h-4 w-full overflow-hidden bg-muted/80 p-0.5">
       <div
         class="h-full transition-all duration-500 shadow-sm"
         :class="gaugeColor"
@@ -68,22 +72,22 @@ const gaugeColor = computed(() => {
     <!-- Bottom Breakdown -->
     <div class="grid grid-cols-2 gap-4 border-t border-border pt-3 text-xs">
       <div>
-        <span class="text-muted-foreground">Poids transporté :</span>
+        <span class="text-muted-foreground">{{ t('transportOrders.capacityGauge.transportedWeight') }}</span>
         <div class="text-sm font-bold text-foreground">
-          {{ totalWeightKg.toLocaleString('fr-FR') }} kg
+          {{ formatNumber(totalWeightKg) }} {{ t('common.kg') }}
         </div>
       </div>
       <div class="text-right">
-        <span class="text-muted-foreground">Charge maximale autorisée :</span>
+        <span class="text-muted-foreground">{{ t('transportOrders.capacityGauge.maxAllowedLoad') }}</span>
         <div class="text-sm font-bold text-foreground">
-          {{ capacityKg.toLocaleString('fr-FR') }} kg
+          {{ formatNumber(capacityKg) }} {{ t('common.kg') }}
         </div>
       </div>
     </div>
 
     <div v-if="isOver" class="flex items-center gap-2 rounded-xl bg-destructive/10 p-2 text-xs font-semibold text-destructive">
       <AlertTriangle class="h-4 w-4 shrink-0" />
-      <span>Attention : le poids transporté dépasse la capacité maximale autorisée !</span>
+      <span>{{ t('transportOrders.capacityGauge.warningOverload') }}</span>
     </div>
   </div>
 </template>

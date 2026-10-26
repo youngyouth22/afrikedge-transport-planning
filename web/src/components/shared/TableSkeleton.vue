@@ -16,7 +16,7 @@ defineProps<{
         v-for="c in cols || 6"
         :key="c"
         class="h-8 rounded-lg bg-muted flex-1"
-        :class="{ 'max-w-[40px]': c === 1 }"
+        :class="{ 'max-w-10': c === 1 }"
       />
     </div>
   </div>

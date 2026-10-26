@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import UserSwitcher from './UserSwitcher.vue'
+import LanguageSelector from './LanguageSelector.vue'
 import { Menu } from '@lucide/vue'
 import { useLayoutStore } from '@/stores/layout'
+import { useI18n } from 'vue-i18n'
 
 defineProps<{
   title?: string
@@ -9,6 +11,7 @@ defineProps<{
 }>()
 
 const layoutStore = useLayoutStore()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -22,7 +25,7 @@ const layoutStore = useLayoutStore()
         type="button"
         @click="layoutStore.toggleSidebar()"
         class="lg:hidden inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-colors"
-        aria-label="Ouvrir le menu"
+        :aria-label="t('nav.openMenu')"
       >
         <Menu class="h-5 w-5" />
       </button>
@@ -43,12 +46,8 @@ const layoutStore = useLayoutStore()
     </div>
 
     <!-- Right Controls -->
-    <div class="flex items-center gap-3 sm:gap-4">
-      <!-- <div class="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-        <Truck class="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-        <span>Transport ERP SEFS1026</span>
-      </div> -->
-
+    <div class="flex items-center gap-2.5 sm:gap-3">
+      <LanguageSelector />
       <UserSwitcher />
     </div>
   </header>

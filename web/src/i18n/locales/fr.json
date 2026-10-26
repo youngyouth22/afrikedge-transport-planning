@@ -1,0 +1,311 @@
+{
+  "app": {
+    "title": "TRANSIT",
+    "subtitle": "Afrikedge Logistics",
+    "portalTitle": "AFRIKEDGE TRANSPORT PLANNING",
+    "portalSubtitle": "Portail de Planification Logistique",
+    "portalDescription": "Sélectionnez votre profil d'accès pour démarrer votre session opérationnelle.",
+    "footerSwitchNote": "Vous pourrez changer d'utilisateur à tout moment dans l'en-tête de l'application."
+  },
+  "nav": {
+    "operations": "Opérations",
+    "salesOrders": "Commandes à planifier",
+    "transportOrders": "Ordres de transport",
+    "logout": "Se déconnecter",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "routes": {
+    "selectUser": "Choix du profil",
+    "salesOrders": "Commandes à planifier",
+    "transportOrders": "Ordres de transport",
+    "transportOrderDetail": "Détail du transport"
+  },
+  "roles": {
+    "DISPATCHER": {
+      "title": "DISPATCHER",
+      "label": "Répartiteur",
+      "labelFeminine": "Répartitrice",
+      "description": "Crée les ordres, affecte les commandes et coordonne les départs des véhicules.",
+      "summary": "Création, affectation, départs."
+    },
+    "LOGISTICS_MANAGER": {
+      "title": "LOGISTICS_MANAGER",
+      "label": "Responsable Logistique",
+      "labelFeminine": "Responsable Logistique",
+      "description": "Supervise les tournées, valide officiellement les ordres et contrôle les flux.",
+      "summary": "Supervision + Validation des ordres."
+    }
+  },
+  "users": {
+    "switchUserTitle": "Basculer vers {name}",
+    "switchUserDescription": "Souhaitez-vous basculer votre profil d'accès vers {name} ({role}) ? Les permissions seront immédiatement actualisées.",
+    "switchUserButton": "Basculer",
+    "switchUserSuccessTitle": "Profil basculé : {name} ({role})",
+    "switchUserSuccessDesc": "Les permissions et actions affichées sont désormais celles du rôle {role}.",
+    "openProfilePortal": "Ouvrir l'écran d'accueil des profils",
+    "accessAs": "Accéder en tant que {name}",
+    "loginTitle": "Connexion : {name}",
+    "loginDescription": "Vous êtes sur le point d'ouvrir une session en tant que {name} ({role}). Confirmer la connexion ?",
+    "loginButton": "Se connecter",
+    "loginSuccessTitle": "Connecté en tant que {name} ({role})",
+    "loginSuccessDesc": "Bienvenue sur la plateforme de planification des transports."
+  },
+  "auth": {
+    "logoutTitle": "Se déconnecter",
+    "logoutDescription": "Êtes-vous sûr de vouloir vous déconnecter de votre session ? Vous serez redirigé vers la page de sélection de profil.",
+    "logoutButton": "Se déconnecter",
+    "cancel": "Annuler"
+  },
+  "common": {
+    "all": "Tous",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "remove": "Retirer",
+    "retry": "Réessayer",
+    "refresh": "Rafraîchir",
+    "actions": "Actions",
+    "loading": "Chargement...",
+    "errorOccurred": "Une erreur est survenue",
+    "noData": "Aucune donnée disponible",
+    "noDataDesc": "Aucun élément ne correspond aux filtres appliqués.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page {page} sur {total}",
+    "kg": "kg",
+    "language": "Langue",
+    "french": "Français",
+    "english": "English",
+    "switchLanguage": "Changer la langue",
+    "currentLanguage": "Langue actuelle : {lang}"
+  },
+  "status": {
+    "salesOrder": {
+      "toPlan": "À planifier",
+      "planned": "Planifiée",
+      "inDelivery": "En livraison"
+    },
+    "transportOrder": {
+      "draft": "Brouillon",
+      "validated": "Validé",
+      "departed": "Parti",
+      "unknown": "Inconnu",
+      "draftEditable": "Brouillon (Modifiable)",
+      "validatedLocked": "Validé (Verrouillé)",
+      "departedInDelivery": "Parti (En livraison)"
+    }
+  },
+  "salesOrders": {
+    "title": "Commandes à planifier",
+    "subtitle": "Aperçu des commandes en attente de planification de transport.",
+    "searchPlaceholder": "Rechercher une commande...",
+    "clearSearch": "Effacer la recherche",
+    "allCities": "Toutes les villes",
+    "clearFilter": "Effacer le filtre et afficher toutes les villes",
+    "refreshData": "Rafraîchir les données",
+    "table": {
+      "selectAllAria": "Sélectionner toutes les commandes",
+      "selectOrderAria": "Sélectionner commande {no}",
+      "order": "Commande",
+      "customer": "Client",
+      "deliveryCity": "Ville de livraison",
+      "weight": "Poids",
+      "status": "Statut",
+      "orderRef": "Réf. Cde",
+      "customerCode": "Code : {code}"
+    },
+    "empty": {
+      "title": "Aucune commande trouvée",
+      "description": "Aucune commande à planifier ne correspond à vos critères de recherche ou de filtre.",
+      "resetFilters": "Réinitialiser les filtres"
+    },
+    "selectionBar": {
+      "count": "{n} commande | {n} commandes",
+      "totalWeight": "Poids total :",
+      "cancel": "Annuler",
+      "deselectAllTitle": "Désélectionner tout",
+      "addToTransport": "Ajouter à un transport"
+    },
+    "addToModal": {
+      "title": "Ajouter à un transport",
+      "subtitle": "{count} commande sélectionnée · {weight} kg | {count} commandes sélectionnées · {weight} kg",
+      "modeNew": "Créer un nouvel ordre",
+      "modeExisting": "Brouillon existant",
+      "activeVehicle": "Véhicule actif",
+      "capacity": "Capacité : {capacity} kg",
+      "vehicleOption": "{code} — {plate} ({capacity} kg max)",
+      "deliveryDate": "Date de livraison prévue",
+      "selectDraft": "Sélectionner un brouillon compatible",
+      "draftsAvailable": "{n} disponible | {n} disponibles",
+      "draftOption": "{no} · {plate} · {date} ({weight} / {capacity} kg)",
+      "emptyDraftTitle": "Aucun ordre brouillon disponible",
+      "emptyDraftDesc": "Aucun ordre au statut Brouillon n'est actuellement disponible.",
+      "gaugeTitle": "Jauge prévisionnelle",
+      "used": "{percent} % utilisé",
+      "forecastWeight": "Poids prévisionnel :",
+      "maxCapacity": "Capacité max :",
+      "remainingAvailable": "Poids restant disponible : {weight} kg",
+      "capacityExceeded": "Dépassement de capacité de {weight} kg !",
+      "cancel": "Annuler",
+      "confirm": "Confirmer l'affectation",
+      "submitting": "Affectation en cours...",
+      "noOrderSelected": "Aucune commande sélectionnée.",
+      "overCapacityError": "La capacité maximale du véhicule est dépassée.",
+      "selectVehicleError": "Veuillez sélectionner un véhicule.",
+      "selectDateError": "Veuillez choisir une date de livraison.",
+      "selectDraftError": "Veuillez sélectionner un brouillon existant.",
+      "successTitle": "Affectation réussie pour l'ordre {no}",
+      "successDesc": "{count} commande affectée ({weight} kg). | {count} commandes affectées ({weight} kg).",
+      "viewDetail": "Voir le détail"
+    }
+  },
+  "transportOrders": {
+    "title": "Ordres de transport",
+    "subtitle": "Suivi opérationnel des tournées, vérification des capacités.",
+    "filterByDate": "Filtrer par date",
+    "clearDate": "Effacer la date",
+    "refreshList": "Rafraîchir la liste",
+    "refresh": "Rafraîchir",
+    "newTransport": "Nouveau transport",
+    "table": {
+      "transportOrder": "Ordre de transport",
+      "vehicle": "Véhicule",
+      "deliveryDate": "Date de livraison",
+      "orders": "Commandes",
+      "fillCapacity": "Remplissage / Capacité",
+      "status": "Statut",
+      "createdBy": "Créé par {user}"
+    },
+    "empty": {
+      "title": "Aucun ordre de transport trouvé",
+      "description": "Aucun ordre ne correspond aux filtres de statut ou de date sélectionnés.",
+      "createNew": "Créer un nouvel ordre"
+    },
+    "createModal": {
+      "title": "Créer un ordre de transport",
+      "description": "Statut initial : Brouillon (0)",
+      "errorTitle": "Erreur lors de la création",
+      "assignedVehicle": "Véhicule affecté",
+      "maxCapacity": "Capacité max : {capacity} kg",
+      "selectVehicle": "Sélectionner un véhicule",
+      "scheduledDate": "Date de livraison prévue",
+      "datePlaceholder": "AAAA-MM-JJ",
+      "openCalendar": "Ouvrir le calendrier",
+      "ruleVehicleUnique": "Règle : un véhicule ne peut être affecté qu'à un seul ordre par date.",
+      "cancel": "Annuler",
+      "create": "Créer l'ordre",
+      "creating": "Création en cours...",
+      "successTitle": "Ordre de transport {no} créé avec succès !",
+      "successDesc": "Vous pouvez maintenant lui assigner des commandes.",
+      "validation": {
+        "vehicleRequired": "Veuillez sélectionner un véhicule.",
+        "dateRequired": "Veuillez choisir une date de livraison.",
+        "dateInPast": "La date de livraison ne peut pas être dans le passé."
+      }
+    },
+    "detail": {
+      "loading": "Chargement du détail de l'ordre...",
+      "notFound": "Ordre introuvable.",
+      "createdBy": "Créé par",
+      "validatedBy": "Validé par",
+      "addOrders": "Ajouter des commandes",
+      "validateOrder": "Valider l'ordre",
+      "confirmDepart": "Confirmer le départ",
+      "departedBadge": "Transport parti en livraison",
+      "assignedVehicle": "Véhicule affecté",
+      "plateNo": "Immatriculation : {plate}",
+      "ratedCapacity": "Capacité nominale :",
+      "planning": "Planification",
+      "scheduledDeliveryDate": "Date de livraison prévue",
+      "currentState": "État actuel :",
+      "transportedOrders": "Commandes transportées ({count})",
+      "totalCumulativeWeight": "Poids total cumulé :",
+      "emptyOrdersTitle": "Aucune commande affectée à cet ordre",
+      "emptyOrdersDesc": "Cet ordre est un brouillon vide. Ajoutez des commandes pour pouvoir le valider et planifier la tournée.",
+      "lineTable": {
+        "order": "Commande",
+        "customer": "Client",
+        "city": "Ville",
+        "weight": "Poids",
+        "status": "Statut",
+        "lineLabel": "Ligne transport",
+        "customerCode": "Code : {code}",
+        "removeLineTitle": "Retirer du transport"
+      },
+      "confirmRemove": {
+        "title": "Retirer la commande",
+        "description": "Êtes-vous sûr de vouloir retirer la commande {no} de cet ordre ? Elle repassera au statut \"À planifier\".",
+        "confirm": "Retirer de l'ordre",
+        "cancel": "Annuler",
+        "success": "Commande {no} retirée avec succès."
+      },
+      "confirmValidate": {
+        "title": "Valider l'ordre de transport",
+        "description": "Êtes-vous sûr de vouloir valider l'ordre {no} ? Une fois validé, il sera verrouillé contre toute modification et prêt pour le départ.",
+        "confirm": "Valider l'ordre",
+        "cancel": "Annuler",
+        "cannotValidateEmpty": "Validation impossible",
+        "cannotValidateEmptyDesc": "Un ordre de transport doit contenir au moins une commande pour être validé.",
+        "success": "L'ordre {no} a été validé avec succès !",
+        "successDesc": "L'ordre est désormais verrouillé et prêt pour le départ."
+      },
+      "confirmDepart": {
+        "title": "Confirmer le départ du véhicule",
+        "description": "Confirmer le départ du véhicule pour l'ordre {no} ? Les commandes associées passeront au statut \"En livraison\".",
+        "confirm": "Confirmer le départ",
+        "cancel": "Annuler",
+        "success": "Le transport {no} est marqué comme Parti !",
+        "successDesc": "Toutes les commandes sont désormais en cours de livraison."
+      }
+    },
+    "addLinesModal": {
+      "title": "Ajouter des commandes à {no}",
+      "description": "Sélectionnez les commandes à planifier compatibles avec la capacité restante.",
+      "selectedWeight": "Poids sélectionné :",
+      "newTotalWeight": "Nouveau poids total :",
+      "overCapacityWarning": "Dépassement de capacité de {weight} kg",
+      "loading": "Chargement des commandes...",
+      "emptyTitle": "Aucune commande disponible",
+      "emptyDesc": "Aucune commande disponible au statut À planifier.",
+      "selectedOrdersCount": "{count} commande sélectionnée | {count} commandes sélectionnées",
+      "cancel": "Annuler",
+      "addOrders": "Ajouter les commandes",
+      "adding": "Ajout en cours...",
+      "selectAtLeastOne": "Veuillez sélectionner au moins une commande.",
+      "capacityExceeded": "La capacité maximale du véhicule serait dépassée.",
+      "success": "{count} commande ajoutée avec succès ! | {count} commandes ajoutées avec succès !"
+    },
+    "capacityGauge": {
+      "title": "Capacité du véhicule",
+      "used": "utilisé",
+      "remainingWeight": "Poids restant",
+      "transportedWeight": "Poids transporté :",
+      "maxAllowedLoad": "Charge maximale autorisée :",
+      "warningOverload": "Attention : le poids transporté dépasse la capacité maximale autorisée !"
+    }
+  },
+  "errors": {
+    "default": "Une erreur inattendue est survenue. Veuillez réessayer.",
+    "network": "Impossible de contacter le serveur. Veuillez vérifier votre connexion.",
+    "unauthorized": "Session expirée ou utilisateur non identifié.",
+    "forbidden": "Vous n'avez pas les autorisations nécessaires pour effectuer cette action.",
+    "notFound": "La ressource demandée est introuvable.",
+    "conflict": "Un conflit de données est survenu. Veuillez rafraîchir et réessayer.",
+    "transportNotFound": "Ordre de transport \"{no}\" introuvable.",
+    "vehicleNotFound": "Véhicule \"{code}\" introuvable.",
+    "vehicleInactive": "Ce véhicule est inactif et ne peut pas être affecté à une tournée.",
+    "deliveryDateInPast": "La date de livraison ne peut pas être dans le passé.",
+    "vehicleAlreadyBooked": "Le véhicule est déjà affecté à un autre transport pour cette date de livraison.",
+    "emptyTransportCannotValidate": "Un ordre de transport doit contenir au moins une commande pour être validé.",
+    "onlyLogisticsManagerCanValidate": "Seul le Responsable Logistique (LOGISTICS_MANAGER) peut valider un ordre de transport.",
+    "onlyDraftCanBeModified": "Seuls les ordres de transport au statut Brouillon peuvent être modifiés.",
+    "onlyValidatedCanDepart": "Seul un ordre de transport validé peut être marqué comme parti.",
+    "orderAlreadyAssigned": "La commande {no} est déjà affectée à un autre ordre de transport.",
+    "orderNotInStatusToPlan": "La commande {no} n'est pas au statut À planifier.",
+    "orderLineNotFound": "La commande {salesOrderNo} n'appartient pas à l'ordre de transport {transportNo}.",
+    "capacityExceeded": "Le poids total ({weight} kg) dépasse la capacité maximale du véhicule ({capacity} kg)."
+  }
+}

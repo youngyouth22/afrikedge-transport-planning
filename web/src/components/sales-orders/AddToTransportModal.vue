@@ -5,6 +5,9 @@ import { useSalesOrdersStore } from '@/stores/sales-orders'
 import { vehiclesApi, type Vehicle } from '@/api/vehicles.api'
 import { transportOrdersApi, type TransportOrderSummary } from '@/api/transport-orders.api'
 import { toast } from 'vue-sonner'
+import { useI18n } from 'vue-i18n'
+import { formatNumber, formatDate } from '@/i18n'
+import { getLocalizedErrorMessage } from '@/lib/error-translator'
 import {
   X,
   Truck,
@@ -34,6 +37,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const store = useSalesOrdersStore()
+const { t } = useI18n()
 
 const mode = ref<'new' | 'existing'>('new')
 const activeVehicles = ref<Vehicle[]>([])
@@ -85,9 +89,8 @@ async function loadData() {
     if (transports.length > 0 && !selectedDraftNo.value) {
       selectedDraftNo.value = transports[0].no
     }
-
   } catch (err: any) {
-    errorMessage.value = err.message || 'Erreur lors du chargement des véhicules.'
+    errorMessage.value = getLocalizedErrorMessage(err)
   } finally {
     isLoadingVehicles.value = false
   }
@@ -133,12 +136,12 @@ const remainingCapacityKg = computed(() => {
 
 async function handleSubmit() {
   if (store.selectedCount === 0) {
-    toast.error('Aucune commande sélectionnée.')
+    toast.error(t('salesOrders.addToModal.noOrderSelected'))
     return
   }
 
   if (isOverCapacity.value) {
-    toast.error('La capacité maximale du véhicule est dépassée.')
+    toast.error(t('salesOrders.addToModal.overCapacityError'))
     return
   }
 
@@ -150,10 +153,10 @@ async function handleSubmit() {
 
     if (mode.value === 'new') {
       if (!selectedVehicleCode.value) {
-        throw new Error('Veuillez sélectionner un véhicule.')
+        throw new Error(t('salesOrders.addToModal.selectVehicleError'))
       }
       if (!deliveryDate.value) {
-        throw new Error('Veuillez choisir une date de livraison.')
+        throw new Error(t('salesOrders.addToModal.selectDateError'))
       }
 
       // 1. Créer le transport
@@ -164,7 +167,7 @@ async function handleSubmit() {
       targetOrderNo = createRes.no
     } else {
       if (!selectedDraftNo.value) {
-        throw new Error('Veuillez sélectionner un brouillon existant.')
+        throw new Error(t('salesOrders.addToModal.selectDraftError'))
       }
       targetOrderNo = selectedDraftNo.value
     }
@@ -173,10 +176,17 @@ async function handleSubmit() {
     const salesOrderNos = Array.from(store.selectedOrderNos)
     await transportOrdersApi.addLines(targetOrderNo, salesOrderNos)
 
-    toast.success(`Affectation réussie pour l'ordre ${targetOrderNo}`, {
-      description: `${salesOrderNos.length} commandes affectées (${store.selectedTotalWeight} kg).`,
+    toast.success(t('salesOrders.addToModal.successTitle', { no: targetOrderNo }), {
+      description: t(
+        'salesOrders.addToModal.successDesc',
+        {
+          count: salesOrderNos.length,
+          weight: formatNumber(store.selectedTotalWeight),
+        },
+        salesOrderNos.length,
+      ),
       action: {
-        label: 'Voir le détail',
+        label: t('salesOrders.addToModal.viewDetail'),
         onClick: () => router.push(`/transport-orders/${targetOrderNo}`),
       },
     })
@@ -185,7 +195,7 @@ async function handleSubmit() {
     emit('success')
     emit('close')
   } catch (err: any) {
-    errorMessage.value = err.message || "Erreur lors de l'affectation au transport."
+    errorMessage.value = getLocalizedErrorMessage(err)
   } finally {
     isSubmitting.value = false
   }
@@ -207,16 +217,16 @@ async function handleSubmit() {
             <Boxes class="h-5 w-5" />
           </div>
           <div>
-            <h3 class="text-base font-bold text-foreground">Ajouter à un transport</h3>
+            <h3 class="text-base font-bold text-foreground">{{ t('salesOrders.addToModal.title') }}</h3>
             <p class="text-xs text-muted-foreground">
-              {{ store.selectedCount }} commande(s) sélectionnée(s) · {{ store.selectedTotalWeight }} kg
+              {{ t('salesOrders.addToModal.subtitle', { count: store.selectedCount, weight: formatNumber(store.selectedTotalWeight) }, store.selectedCount) }}
             </p>
           </div>
         </div>
         <button
           type="button"
           @click="$emit('close')"
-          class="rounded-xl p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition"
+          class="rounded-xl p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition cursor-pointer"
         >
           <X class="h-4 w-4" />
         </button>
@@ -229,7 +239,7 @@ async function handleSubmit() {
       >
         <AlertTriangle class="h-4 w-4 shrink-0 mt-0.5" />
         <div>
-          <span class="font-bold">Erreur : </span>
+          <span class="font-bold">{{ t('common.errorOccurred') }} : </span>
           <span>{{ errorMessage }}</span>
         </div>
       </div>
@@ -239,18 +249,18 @@ async function handleSubmit() {
         <button
           type="button"
           @click="mode = 'new'"
-          class="flex-1 rounded-lg py-2 transition"
+          class="flex-1 rounded-lg py-2 transition cursor-pointer"
           :class="mode === 'new' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
         >
-          Créer un nouvel ordre
+          {{ t('salesOrders.addToModal.modeNew') }}
         </button>
         <button
           type="button"
           @click="mode = 'existing'"
-          class="flex-1 rounded-lg py-2 transition"
+          class="flex-1 rounded-lg py-2 transition cursor-pointer"
           :class="mode === 'existing' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
         >
-          Brouillon existant
+          {{ t('salesOrders.addToModal.modeExisting') }}
         </button>
       </div>
 
@@ -263,10 +273,10 @@ async function handleSubmit() {
             <label class="text-xs font-bold text-foreground flex items-center justify-between">
               <span class="flex items-center gap-1.5">
                 <Truck class="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Véhicule actif</span>
+                <span>{{ t('salesOrders.addToModal.activeVehicle') }}</span>
               </span>
               <span class="text-[11px] font-normal text-muted-foreground">
-                Capacité : {{ targetCapacityKg.toLocaleString('fr-FR') }} kg
+                {{ t('salesOrders.addToModal.capacity', { capacity: formatNumber(targetCapacityKg) }) }}
               </span>
             </label>
             <select
@@ -278,7 +288,7 @@ async function handleSubmit() {
                 :key="v.code"
                 :value="v.code"
               >
-                {{ v.code }} — {{ v.plateNo }} ({{ v.capacityKg.toLocaleString('fr-FR') }} kg max)
+                {{ t('salesOrders.addToModal.vehicleOption', { code: v.code, plate: v.plateNo, capacity: formatNumber(v.capacityKg) }) }}
               </option>
             </select>
           </div>
@@ -287,7 +297,7 @@ async function handleSubmit() {
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-foreground flex items-center gap-1.5">
               <Calendar class="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Date de livraison prévue</span>
+              <span>{{ t('salesOrders.addToModal.deliveryDate') }}</span>
             </label>
             <input
               v-model="deliveryDate"
@@ -302,17 +312,19 @@ async function handleSubmit() {
         <template v-else>
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-foreground flex items-center justify-between">
-              <span>Sélectionner un brouillon compatible</span>
-              <span class="text-[11px] text-muted-foreground">{{ draftTransports.length }} disponible(s)</span>
+              <span>{{ t('salesOrders.addToModal.selectDraft') }}</span>
+              <span class="text-[11px] text-muted-foreground">
+                {{ t('salesOrders.addToModal.draftsAvailable', { n: draftTransports.length }, draftTransports.length) }}
+              </span>
             </label>
             <Empty v-if="draftTransports.length === 0" class="border border-dashed p-4">
               <EmptyHeader>
                 <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
                   <Truck class="size-7 text-muted-foreground" />
                 </EmptyMedia>
-                <EmptyTitle>Aucun ordre brouillon disponible</EmptyTitle>
+                <EmptyTitle>{{ t('salesOrders.addToModal.emptyDraftTitle') }}</EmptyTitle>
                 <EmptyDescription>
-                  Aucun ordre au statut Brouillon n'est actuellement disponible.
+                  {{ t('salesOrders.addToModal.emptyDraftDesc') }}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -326,7 +338,13 @@ async function handleSubmit() {
                 :key="d.no"
                 :value="d.no"
               >
-                {{ d.no }} · {{ d.vehiclePlateNo }} · {{ d.deliveryDate }} ({{ d.totalWeightKg }} / {{ d.vehicleCapacityKg }} kg)
+                {{ t('salesOrders.addToModal.draftOption', {
+                  no: d.no,
+                  plate: d.vehiclePlateNo,
+                  date: formatDate(d.deliveryDate),
+                  weight: formatNumber(d.totalWeightKg),
+                  capacity: formatNumber(d.vehicleCapacityKg)
+                }) }}
               </option>
             </select>
           </div>
@@ -335,12 +353,12 @@ async function handleSubmit() {
         <!-- JAUGE DE CHARGE PRÉVISIONNELLE -->
         <div class="rounded-2xl border border-border bg-muted/30 p-4 space-y-3">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-foreground">Jauge prévisionnelle</span>
+            <span class="font-bold text-foreground">{{ t('salesOrders.addToModal.gaugeTitle') }}</span>
             <span
               class="font-extrabold text-xs"
               :class="isOverCapacity ? 'text-destructive font-black' : 'text-emerald-600 dark:text-emerald-400'"
             >
-              {{ fillPercentage }} % utilisé
+              {{ t('salesOrders.addToModal.used', { percent: fillPercentage }) }}
             </span>
           </div>
 
@@ -355,20 +373,20 @@ async function handleSubmit() {
 
           <div class="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-border/50">
             <div>
-              <span class="text-muted-foreground">Poids prévisionnel : </span>
-              <strong class="text-foreground">{{ projectedWeightKg.toLocaleString('fr-FR') }} kg</strong>
+              <span class="text-muted-foreground">{{ t('salesOrders.addToModal.forecastWeight') }} </span>
+              <strong class="text-foreground">{{ formatNumber(projectedWeightKg) }} {{ t('common.kg') }}</strong>
             </div>
             <div class="text-right">
-              <span class="text-muted-foreground">Capacité max : </span>
-              <strong class="text-foreground">{{ targetCapacityKg.toLocaleString('fr-FR') }} kg</strong>
+              <span class="text-muted-foreground">{{ t('salesOrders.addToModal.maxCapacity') }} </span>
+              <strong class="text-foreground">{{ formatNumber(targetCapacityKg) }} {{ t('common.kg') }}</strong>
             </div>
             <div class="col-span-2">
               <span v-if="!isOverCapacity" class="text-emerald-600 dark:text-emerald-400 font-medium">
-                Poids restant disponible : {{ remainingCapacityKg.toLocaleString('fr-FR') }} kg
+                {{ t('salesOrders.addToModal.remainingAvailable', { weight: formatNumber(remainingCapacityKg) }) }}
               </span>
               <span v-else class="text-destructive font-bold flex items-center gap-1">
                 <AlertTriangle class="h-3.5 w-3.5" />
-                Dépassement de capacité de {{ Math.abs(remainingCapacityKg).toLocaleString('fr-FR') }} kg !
+                {{ t('salesOrders.addToModal.capacityExceeded', { weight: formatNumber(Math.abs(remainingCapacityKg)) }) }}
               </span>
             </div>
           </div>
@@ -383,7 +401,7 @@ async function handleSubmit() {
           class="h-11.5 px-5 hover:cursor-pointer"
           @click="$emit('close')"
         >
-          Annuler
+          {{ t('salesOrders.addToModal.cancel') }}
         </Button>
         <Button
           type="button"
@@ -394,7 +412,7 @@ async function handleSubmit() {
         >
           <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
           <CheckCircle2 v-else class="h-4 w-4" />
-          <span>{{ isSubmitting ? 'Affectation en cours...' : 'Confirmer l\'affectation' }}</span>
+          <span>{{ isSubmitting ? t('salesOrders.addToModal.submitting') : t('salesOrders.addToModal.confirm') }}</span>
         </Button>
       </div>
     </div>

@@ -33,7 +33,7 @@ const variantClasses: Record<string, string> = {
     data-slot="table-status-badge"
     :class="
       cn(
-        'text__14 px-2.5 py-1 inline-flex items-center gap-1.5 rounded-[4px] border font-medium whitespace-nowrap',
+        'text__14 px-2.5 py-1 inline-flex items-center gap-1.5 rounded-lg border font-medium whitespace-nowrap',
         variantClasses[props.variant],
         props.class,
       )

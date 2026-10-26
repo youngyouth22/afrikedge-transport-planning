@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { useUserStore, AVAILABLE_USERS, type UserId } from "@/stores/user";
+import { useUserStore, AVAILABLE_USERS, type UserId, type UserRole } from "@/stores/user";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import ConfirmDialog from "@/components/shared/ConfirmDialog.vue";
+import LanguageSelector from "@/components/layout/LanguageSelector.vue";
 import { toast } from "vue-sonner";
 import { ArrowRight, ShieldCheck, Truck, UserCircle2 } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
@@ -12,17 +13,29 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { useI18n } from "vue-i18n";
 
 const router = useRouter();
 const userStore = useUserStore();
 const { confirm, confirmDialogProps, handleConfirm, handleCancel } = useConfirmDialog();
+const { t } = useI18n();
+
+function getRoleLabel(role: UserRole, isFeminine = false): string {
+  if (role === 'DISPATCHER') {
+    return isFeminine ? t('roles.DISPATCHER.labelFeminine') : t('roles.DISPATCHER.label')
+  }
+  return isFeminine ? t('roles.LOGISTICS_MANAGER.labelFeminine') : t('roles.LOGISTICS_MANAGER.label')
+}
 
 async function selectUser(id: UserId) {
   const user = AVAILABLE_USERS[id];
+  const roleLabel = getRoleLabel(user.role, id === 'diane');
+
   const confirmed = await confirm({
-    title: `Connexion : ${user.name}`,
-    description: `Vous êtes sur le point d'ouvrir une session en tant que ${user.name} (${user.roleLabel}). Confirmer la connexion ?`,
-    confirmText: "Se connecter",
+    title: t('users.loginTitle', { name: user.name }),
+    description: t('users.loginDescription', { name: user.name, role: roleLabel }),
+    confirmText: t('users.loginButton'),
+    cancelText: t('common.cancel'),
     confirmVariant: "default",
     variant: "default",
     icon: user.role === "DISPATCHER" ? Truck : ShieldCheck,
@@ -30,8 +43,8 @@ async function selectUser(id: UserId) {
   if (!confirmed) return;
 
   userStore.setUser(id);
-  toast.success(`Connecté en tant que ${user.name} (${user.roleLabel})`, {
-    description: "Bienvenue sur la plateforme de planification des transports.",
+  toast.success(t('users.loginSuccessTitle', { name: user.name, role: roleLabel }), {
+    description: t('users.loginSuccessDesc'),
   });
   router.push("/sales-orders");
 }
@@ -41,6 +54,11 @@ async function selectUser(id: UserId) {
   <div
     class="relative flex min-h-screen flex-col items-center justify-center bg-Msurfacesurfacesecondary overflow-hidden p-6 text-white selection:bg-emerald-500 selection:text-white"
   >
+    <!-- Top-right language selector -->
+    <div class="absolute top-6 right-6 z-20">
+      <LanguageSelector />
+    </div>
+
     <div class="relative z-10 w-full max-w-4xl space-y-12 text-center">
       <!-- En-tête / Branding -->
       <div class="space-y-4">
@@ -48,18 +66,17 @@ async function selectUser(id: UserId) {
           class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-4 py-1.5 text-xs font-semibold tracking-wide text-emerald-400 backdrop-blur-md"
         >
           <Truck class="h-3.5 w-3.5 text-emerald-400" />
-          <span>AFRIKEDGE TRANSPORT PLANNING</span>
+          <span>{{ t('app.portalTitle') }}</span>
         </div>
         <h1
           class="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground"
         >
-          Portail de Planification Logistique
+          {{ t('app.portalSubtitle') }}
         </h1>
         <p
           class="mx-auto max-w-xl text-base text-Mtexttextsecondary sm:text-lg"
         >
-          Sélectionnez votre profil d'accès pour démarrer votre session
-          opérationnelle.
+          {{ t('app.portalDescription') }}
         </p>
       </div>
 
@@ -105,10 +122,10 @@ async function selectUser(id: UserId) {
               >
                 <span>DISPATCHER</span>
                 <span class="text-emerald-500">·</span>
-                <span class="text-slate-300 font-normal">Répartitrice</span>
+                <span class="text-slate-300 font-normal">{{ t('roles.DISPATCHER.labelFeminine') }}</span>
               </div>
               <p class="mt-3 text-sm text-slate-400 leading-relaxed max-w-xs">
-                {{ AVAILABLE_USERS.diane.description }}
+                {{ t('roles.DISPATCHER.description') }}
               </p>
             </div>
 
@@ -119,7 +136,7 @@ async function selectUser(id: UserId) {
                 class="h-11.5 px-6 text-sm font-semibold hover:cursor-pointer"
                 @click.stop="selectUser('diane')"
               >
-                <span>Accéder en tant que Diane</span>
+                <span>{{ t('users.accessAs', { name: 'Diane' }) }}</span>
                 <ArrowRight
                   class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
                 />
@@ -168,10 +185,10 @@ async function selectUser(id: UserId) {
               >
                 <span>LOGISTICS_MANAGER</span>
                 <span class="text-emerald-500">·</span>
-                <span class="text-slate-300 font-normal">Responsable Logistique</span>
+                <span class="text-slate-300 font-normal">{{ t('roles.LOGISTICS_MANAGER.label') }}</span>
               </div>
               <p class="mt-3 text-sm text-slate-400 leading-relaxed max-w-xs">
-                {{ AVAILABLE_USERS.eric.description }}
+                {{ t('roles.LOGISTICS_MANAGER.description') }}
               </p>
             </div>
 
@@ -182,7 +199,7 @@ async function selectUser(id: UserId) {
                 class="h-11.5 px-6 text-sm font-semibold hover:cursor-pointer"
                 @click.stop="selectUser('eric')"
               >
-                <span>Accéder en tant que Eric</span>
+                <span>{{ t('users.accessAs', { name: 'Eric' }) }}</span>
                 <ArrowRight
                   class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
                 />
@@ -197,10 +214,7 @@ async function selectUser(id: UserId) {
         class="flex items-center justify-center gap-2 text-xs text-slate-500"
       >
         <UserCircle2 class="h-4 w-4 text-emerald-500/60" />
-        <span
-          >Vous pourrez changer d'utilisateur à tout moment dans l'en-tête de
-          l'application.</span
-        >
+        <span>{{ t('app.footerSwitchNote') }}</span>
       </div>
     </div>
 

@@ -21,8 +21,11 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { Plus, Calendar as CalendarIcon, RefreshCw, X, Truck } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
+import { formatDate } from '@/i18n'
 
 const store = useTransportOrdersStore()
+const { t } = useI18n()
 const isCreateModalOpen = ref(false)
 const isCalendarOpen = ref(false)
 const calendarDateValue = ref<any>(undefined)
@@ -49,17 +52,7 @@ watch(
 
 const formattedDate = computed(() => {
   if (!store.dateFilter) return null
-  try {
-    const [year, month, day] = store.dateFilter.split('-').map(Number)
-    const d = new Date(year, month - 1, day)
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(d)
-  } catch {
-    return store.dateFilter
-  }
+  return formatDate(store.dateFilter)
 })
 
 function onDateSelected(date: DateValue | undefined) {
@@ -77,25 +70,25 @@ function clearDateFilter() {
   isCalendarOpen.value = false
 }
 
-const statusOptions = [
-  { value: 'all', label: 'Tous' },
-  { value: '0', label: 'Brouillon' },
-  { value: '1', label: 'Validé' },
-  { value: '2', label: 'Parti' },
-]
+const statusOptions = computed(() => [
+  { value: 'all', label: t('common.all') },
+  { value: '0', label: t('status.transportOrder.draft') },
+  { value: '1', label: t('status.transportOrder.validated') },
+  { value: '2', label: t('status.transportOrder.departed') },
+])
 </script>
 
 <template>
-  <AppLayout title="Ordres de transport">
+  <AppLayout :title="t('transportOrders.title')">
     <div class="space-y-6 max-w-7xl mx-auto">
       <!-- En-tête et Actions -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-4xl font-bold tracking-tight text-foreground sm:text-3xl mb-1">
-            Ordres de transport
+            {{ t('transportOrders.title') }}
           </h2>
           <p class="text__16 text-Mtexttextsecondary">
-            Suivi opérationnel des tournées, vérification des capacités.
+            {{ t('transportOrders.subtitle') }}
           </p>
         </div>
 
@@ -111,7 +104,7 @@ const statusOptions = [
                   :class="store.dateFilter ? 'pl-4 pr-10' : 'px-4'"
                 >
                   <CalendarIcon class="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span>{{ formattedDate || 'Filtrer par date' }}</span>
+                  <span>{{ formattedDate || t('transportOrders.filterByDate') }}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent class="w-auto p-0 rounded-2xl border-border bg-card shadow-lg" align="end">
@@ -122,13 +115,13 @@ const statusOptions = [
               </PopoverContent>
             </Popover>
 
-            <!-- Bouton Close quand une date est sélectionnée (intégré à l'intérieur à droite) -->
+            <!-- Bouton Close quand une date est sélectionnée -->
             <Button
               v-if="store.dateFilter"
               type="button"
               variant="ghost"
               size="icon"
-              title="Effacer la date"
+              :title="t('transportOrders.clearDate')"
               @click.stop.prevent="clearDateFilter"
               class="absolute right-1.5 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
             >
@@ -142,11 +135,11 @@ const statusOptions = [
             variant="outline"
             @click="store.fetchOrders()"
             :disabled="store.isLoading"
-            title="Rafraîchir la liste"
+            :title="t('transportOrders.refreshList')"
             class="h-11.5 px-4 flex items-center gap-2 border-border bg-card hover:bg-accent font-medium text-sm text-foreground hover:cursor-pointer"
           >
             <RefreshCw class="h-4 w-4 text-muted-foreground" :class="{ 'animate-spin': store.isLoading }" />
-            <span>Rafraîchir</span>
+            <span>{{ t('transportOrders.refresh') }}</span>
           </Button>
 
           <!-- Bouton Nouveau transport -->
@@ -156,14 +149,14 @@ const statusOptions = [
             class="h-11.5 px-4 hover:cursor-pointer"
           >
             <Plus class="h-4 w-4" />
-            <span>Nouveau transport</span>
+            <span>{{ t('transportOrders.newTransport') }}</span>
           </Button>
         </div>
       </div>
 
-      <!-- Filtres par Statut (Tabs style Stripe / SaaS comme sur l'image) -->
+      <!-- Filtres par Statut -->
       <div class="border-b border-border">
-        <nav class="flex items-center gap-6 sm:gap-8 -mb-px overflow-x-auto" aria-label="Filtres de statut">
+        <nav class="flex items-center gap-6 sm:gap-8 -mb-px overflow-x-auto" :aria-label="t('transportOrders.table.status')">
           <button
             v-for="opt in statusOptions"
             :key="opt.value"
@@ -197,9 +190,9 @@ const statusOptions = [
           <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
             <Truck class="size-7 text-muted-foreground" />
           </EmptyMedia>
-          <EmptyTitle>Aucun ordre de transport trouvé</EmptyTitle>
+          <EmptyTitle>{{ t('transportOrders.empty.title') }}</EmptyTitle>
           <EmptyDescription>
-            Aucun ordre ne correspond aux filtres de statut ou de date sélectionnés.
+            {{ t('transportOrders.empty.description') }}
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -208,7 +201,7 @@ const statusOptions = [
             class="h-11.5 hover:cursor-pointer"
             @click="isCreateModalOpen = true"
           >
-            Créer un nouvel ordre
+            {{ t('transportOrders.empty.createNew') }}
           </Button>
         </EmptyContent>
       </Empty>

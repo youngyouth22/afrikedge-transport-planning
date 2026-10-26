@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { salesOrdersApi, type SalesOrderToPlan } from '../api/sales-orders.api'
+import { getLocalizedErrorMessage } from '@/lib/error-translator'
 
 const KNOWN_CITIES = ['Bafoussam', 'Douala', 'Edéa', 'Kribi', 'Limbé', 'Yaoundé']
 
@@ -72,7 +73,7 @@ export const useSalesOrdersStore = defineStore('salesOrders', () => {
       totalPages.value = res.totalPages
       page.value = res.page
     } catch (err: any) {
-      error.value = err.message || 'Impossible de charger les commandes à planifier.'
+      error.value = getLocalizedErrorMessage(err)
     } finally {
       isLoading.value = false
     }

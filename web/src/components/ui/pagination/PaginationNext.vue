@@ -4,6 +4,7 @@ import type { ButtonVariants } from '@/components/ui/button'
 import { ChevronRightIcon } from '@lucide/vue'
 import { cn } from 'cn'
 import { buttonVariants } from '@/components/ui/button'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
   href?: string
@@ -18,6 +19,8 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -35,7 +38,7 @@ const emit = defineEmits<{
     @click="emit('click', $event)"
   >
     <slot>
-      <span class="hidden sm:inline">Suivant</span>
+      <span class="hidden sm:inline">{{ t('common.next') }}</span>
       <ChevronRightIcon class="h-4 w-4" />
     </slot>
   </button>
@@ -52,7 +55,7 @@ const emit = defineEmits<{
     @click="emit('click', $event)"
   >
     <slot>
-      <span class="hidden sm:inline">Suivant</span>
+      <span class="hidden sm:inline">{{ t('common.next') }}</span>
       <ChevronRightIcon class="h-4 w-4" />
     </slot>
   </a>

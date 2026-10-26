@@ -4,6 +4,7 @@ import {
   transportOrdersApi,
   type TransportOrderSummary,
 } from '../api/transport-orders.api'
+import { getLocalizedErrorMessage } from '@/lib/error-translator'
 
 export const useTransportOrdersStore = defineStore('transportOrders', () => {
   const orders = ref<TransportOrderSummary[]>([])
@@ -43,7 +44,7 @@ export const useTransportOrdersStore = defineStore('transportOrders', () => {
       totalPages.value = res.totalPages
       page.value = res.page
     } catch (err: any) {
-      error.value = err.message || 'Impossible de charger les ordres de transport.'
+      error.value = getLocalizedErrorMessage(err)
     } finally {
       isLoading.value = false
     }

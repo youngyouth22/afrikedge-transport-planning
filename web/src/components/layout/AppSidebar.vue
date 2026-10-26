@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useLayoutStore } from '@/stores/layout'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
+import { useI18n } from 'vue-i18n'
 import {
   ClipboardList,
   Truck,
@@ -17,19 +19,20 @@ const router = useRouter()
 const userStore = useUserStore()
 const layoutStore = useLayoutStore()
 const { confirm, confirmDialogProps, handleConfirm, handleCancel } = useConfirmDialog()
+const { t } = useI18n()
 
-const navigation = [
+const navigation = computed(() => [
   {
-    name: 'Commandes à planifier',
+    name: t('nav.salesOrders'),
     to: '/sales-orders',
     icon: ClipboardList,
   },
   {
-    name: 'Ordres de transport',
+    name: t('nav.transportOrders'),
     to: '/transport-orders',
     icon: Truck,
   },
-]
+])
 
 function isActive(path: string) {
   if (path === '/transport-orders') {
@@ -44,10 +47,10 @@ function handleNavClick() {
 
 async function handleLogout() {
   const confirmed = await confirm({
-    title: 'Se déconnecter',
-    description: 'Êtes-vous sûr de vouloir vous déconnecter de votre session ? Vous serez redirigé vers la page de sélection de profil.',
-    confirmText: 'Se déconnecter',
-    cancelText: 'Annuler',
+    title: t('auth.logoutTitle'),
+    description: t('auth.logoutDescription'),
+    confirmText: t('auth.logoutButton'),
+    cancelText: t('auth.cancel'),
     variant: 'destructive',
     confirmVariant: 'destructive',
   })
@@ -78,8 +81,8 @@ async function handleLogout() {
         <div class="flex items-center gap-2.5">
           <Boxes class="h-8 w-auto text-Mmaincolorgreen" />
           <div>
-            <h1 class="text-base font-bold tracking-tight text-foreground">TRANSIT</h1>
-            <p class="text-sm font-medium text-muted-foreground">Afrikedge Logistics</p>
+            <h1 class="text-base font-bold tracking-tight text-foreground">{{ t('app.title') }}</h1>
+            <p class="text-sm font-medium text-muted-foreground">{{ t('app.subtitle') }}</p>
           </div>
         </div>
 
@@ -88,7 +91,7 @@ async function handleLogout() {
           type="button"
           @click="layoutStore.closeSidebar()"
           class="lg:hidden rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition cursor-pointer"
-          aria-label="Fermer le menu"
+          :aria-label="t('nav.closeMenu')"
         >
           <X class="h-4 w-4" />
         </button>
@@ -97,7 +100,7 @@ async function handleLogout() {
       <!-- Navigation List -->
       <div class="flex-1 overflow-y-auto py-4">
         <h2 class="px-3 pb-2 text-[10px] font-bold tracking-wider text-Mtexttextsecondary uppercase">
-          OPÉRATIONS
+          {{ t('nav.operations') }}
         </h2>
         <div class="grid grid-cols-1 gap-2">
           <router-link
@@ -130,7 +133,7 @@ async function handleLogout() {
         <div class="text-Mtexttextsecondary">
           <LogOut class="h-5 w-5 shrink-0" />
         </div>
-        <p class="font-medium text__16">Se déconnecter</p>
+        <p class="font-medium text__16">{{ t('nav.logout') }}</p>
       </div>
     </div>
   </aside>

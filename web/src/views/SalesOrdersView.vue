@@ -19,8 +19,10 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { useSalesOrdersStore } from '@/stores/sales-orders'
+import { useI18n } from 'vue-i18n'
 
 const store = useSalesOrdersStore()
+const { t } = useI18n()
 const isModalOpen = ref(false)
 
 onMounted(() => {
@@ -29,62 +31,24 @@ onMounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Commandes à planifier">
+  <AppLayout :title="t('salesOrders.title')">
     <div class="space-y-6 max-w-7xl mx-auto">
-      <!-- En-tête Métier et Cartes KPI -->
+      <!-- En-tête Métier -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 class="text-4xl font-bold tracking-tight text-foreground sm:text-3xl mb-1">
-            Commandes à planifier
+            {{ t('salesOrders.title') }}
           </h2>
-            <p class="text__16 text-Mtexttextsecondary">
-              Aperçu des commandes en attente de planification de transport.
-            </p>
+          <p class="text__16 text-Mtexttextsecondary">
+            {{ t('salesOrders.subtitle') }}
+          </p>
         </div>
-
-        <!-- KPI Cards -->
-        <!-- <div class="flex items-center gap-3"> -->
-          <!-- Carte À planifier -->
-          <!-- <div class="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm min-w-[150px]">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <PackageCheck class="h-5 w-5" />
-            </div>
-            <div>
-              <div class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                À planifier
-              </div>
-              <div class="text-xl font-extrabold text-foreground">
-                {{ store.total }}
-              </div>
-            </div>
-          </div> -->
-
-          <!-- Carte Poids sélectionné -->
-          <!-- <div class="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm min-w-[170px]">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Weight class="h-5 w-5" />
-            </div>
-            <div>
-              <div class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Poids sélectionné
-              </div>
-              <div class="text-xl font-extrabold text-foreground">
-                {{ store.selectedTotalWeight.toLocaleString('fr-FR') }}
-                <span class="text-xs font-normal text-muted-foreground">kg</span>
-              </div>
-            </div>
-          </div>
-
-          
-          
-        </div> -->
       </div>
 
       <!-- Barre de filtres et recherche -->
       <div class="relative z-2">
         <SalesOrdersFilters />
       </div>
-      
 
       <!-- États de chargement, erreur et tableau -->
       <div v-if="store.isLoading" class="rounded-2xl border border-border bg-card shadow-sm">
@@ -102,18 +66,18 @@ onMounted(() => {
           <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
             <Inbox class="size-7 text-muted-foreground" />
           </EmptyMedia>
-          <EmptyTitle>Aucune commande trouvée</EmptyTitle>
+          <EmptyTitle>{{ t('salesOrders.empty.title') }}</EmptyTitle>
           <EmptyDescription>
-            Aucune commande à planifier ne correspond à vos critères de recherche ou de filtre.
+            {{ t('salesOrders.empty.description') }}
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button
             variant="outline"
-            class="h-[46px] hover:cursor-pointer"
+            class="h-11.5 hover:cursor-pointer"
             @click="() => { store.searchQuery = ''; store.setCityFilter('all') }"
           >
-            Réinitialiser les filtres
+            {{ t('salesOrders.empty.resetFilters') }}
           </Button>
         </EmptyContent>
       </Empty>

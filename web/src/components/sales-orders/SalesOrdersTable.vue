@@ -6,8 +6,11 @@ import { MapPin, Weight, FileText } from '@lucide/vue'
 import DataTableCustom from '@/components/shared/DataTableCustom.vue'
 import TablePill from '@/components/shared/TablePill.vue'
 import TableStatusBadge from '@/components/shared/TableStatusBadge.vue'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/i18n'
 
 const store = useSalesOrdersStore()
+const { t } = useI18n()
 
 const isAllSelected = computed(() => {
   if (store.filteredOrders.length === 0) return false
@@ -38,23 +41,23 @@ function handleRowClick(order: SalesOrderToPlan) {
             :indeterminate="isSomeSelected"
             @change="toggleSelectAll"
             class="w-5 h-5 border border-Mgray400! rounded-lg accent-emerald-600 cursor-pointer"
-            aria-label="Sélectionner toutes les commandes"
+            :aria-label="t('salesOrders.table.selectAllAria')"
           />
         </th>
         <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Commande
+          {{ t('salesOrders.table.order') }}
         </th>
         <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Client
+          {{ t('salesOrders.table.customer') }}
         </th>
         <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Ville de livraison
+          {{ t('salesOrders.table.deliveryCity') }}
         </th>
         <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-right">
-          Poids
+          {{ t('salesOrders.table.weight') }}
         </th>
         <th class="px-4 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
-          Statut
+          {{ t('salesOrders.table.status') }}
         </th>
       </tr>
     </template>
@@ -77,10 +80,9 @@ function handleRowClick(order: SalesOrderToPlan) {
           :checked="store.selectedOrderNos.has(order.salesOrderNo)"
           @change="store.toggleSelection(order)"
           class="w-5 h-5 border border-Mgray400! rounded-lg accent-emerald-600 cursor-pointer"
-          :aria-label="`Sélectionner commande ${order.salesOrderNo}`"
+          :aria-label="t('salesOrders.table.selectOrderAria', { no: order.salesOrderNo })"
         />
       </td>
-
 
       <!-- Commande -->
       <td class="px-4 py-3">
@@ -90,7 +92,7 @@ function handleRowClick(order: SalesOrderToPlan) {
           </div>
           <div>
             <h5 class="font-medium text__16 text-Mtexttextprimary">{{ order.salesOrderNo }}</h5>
-            <p class="text__14 text-Mtexttextsecondary">Réf. Cde</p>
+            <p class="text__14 text-Mtexttextsecondary">{{ t('salesOrders.table.orderRef') }}</p>
           </div>
         </div>
       </td>
@@ -98,7 +100,7 @@ function handleRowClick(order: SalesOrderToPlan) {
       <!-- Client -->
       <td class="px-4 py-3">
         <div class="font-medium text__14 text-Mtexttextprimary">{{ order.customerName }}</div>
-        <div class="text-xs text-Mtexttextsecondary">Code : {{ order.customerNo }}</div>
+        <div class="text-xs text-Mtexttextsecondary">{{ t('salesOrders.table.customerCode', { code: order.customerNo }) }}</div>
       </td>
 
       <!-- Ville (Pill style comme Category) -->
@@ -112,14 +114,14 @@ function handleRowClick(order: SalesOrderToPlan) {
       <td class="px-4 py-3 text-right">
         <div class="inline-flex items-center gap-1.5 font-medium text__14 text-Mtexttextprimary">
           <Weight class="h-3.5 w-3.5 text-Mtexttextsecondary" />
-          <span>{{ order.totalWeightKg.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }} kg</span>
+          <span>{{ formatNumber(order.totalWeightKg, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }} {{ t('common.kg') }}</span>
         </div>
       </td>
 
       <!-- Statut (Badge pastel) -->
       <td class="px-4 py-3 text-center">
         <TableStatusBadge variant="success">
-          À planifier
+          {{ t('status.salesOrder.toPlan') }}
         </TableStatusBadge>
       </td>
     </tr>

@@ -1,20 +1,33 @@
 <script setup lang="ts">
-import { useUserStore, AVAILABLE_USERS, type UserId } from '@/stores/user'
+import { computed, ref } from 'vue'
+import { useUserStore, AVAILABLE_USERS, type UserId, type UserRole } from '@/stores/user'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 import { toast } from 'vue-sonner'
 import { Check, ChevronDown, UserCheck, Shield, Truck } from '@lucide/vue'
-import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useI18n } from 'vue-i18n'
 
 const userStore = useUserStore()
 const { confirm, confirmDialogProps, handleConfirm, handleCancel } = useConfirmDialog()
+const { t } = useI18n()
 const isOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 
 onClickOutside(dropdownRef, () => {
   isOpen.value = false
+})
+
+function getRoleLabel(role: UserRole, isFeminine = false): string {
+  if (role === 'DISPATCHER') {
+    return isFeminine ? t('roles.DISPATCHER.labelFeminine') : t('roles.DISPATCHER.label')
+  }
+  return isFeminine ? t('roles.LOGISTICS_MANAGER.labelFeminine') : t('roles.LOGISTICS_MANAGER.label')
+}
+
+const currentUserRoleLabel = computed(() => {
+  return getRoleLabel(userStore.currentUser.role, userStore.currentUserId === 'diane')
 })
 
 async function switchUser(id: UserId) {
@@ -25,20 +38,22 @@ async function switchUser(id: UserId) {
 
   const user = AVAILABLE_USERS[id]
   isOpen.value = false
+  const roleLabel = getRoleLabel(user.role, id === 'diane')
 
   const confirmed = await confirm({
-    title: `Basculer vers ${user.name}`,
-    description: `Souhaitez-vous basculer votre profil d'accès vers ${user.name} (${user.roleLabel}) ? Les permissions seront immédiatement actualisées.`,
-    confirmText: 'Basculer',
+    title: t('users.switchUserTitle', { name: user.name }),
+    description: t('users.switchUserDescription', { name: user.name, role: roleLabel }),
+    confirmText: t('users.switchUserButton'),
     confirmVariant: 'default',
     variant: 'default',
+    cancelText: t('common.cancel'),
     icon: user.role === 'DISPATCHER' ? Truck : Shield,
   })
   if (!confirmed) return
 
   userStore.setUser(id)
-  toast.info(`Profil basculé : ${user.name} (${user.roleLabel})`, {
-    description: `Les permissions et actions affichées sont désormais celles du rôle ${user.role}.`,
+  toast.info(t('users.switchUserSuccessTitle', { name: user.name, role: roleLabel }), {
+    description: t('users.switchUserSuccessDesc', { role: user.role }),
   })
 }
 </script>
@@ -62,7 +77,7 @@ async function switchUser(id: UserId) {
 
       <div class="flex flex-col text-left">
         <span class="font-semibold text-[18px] leading-tight text-foreground">{{ userStore.currentUser.name }}</span>
-        <span class="text-[14px] text-muted-foreground leading-none">{{ userStore.currentUser.roleLabel }}</span>
+        <span class="text-[14px] text-muted-foreground leading-none">{{ currentUserRoleLabel }}</span>
       </div>
 
       <ChevronDown class="h-4 w-auto text-muted-foreground transition-transform duration-200" :class="{ 'rotate-180': isOpen }" />
@@ -73,7 +88,6 @@ async function switchUser(id: UserId) {
       v-if="isOpen"
       class="absolute right-0 mt-2 w-72 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in zoom-in-95 duration-150"
     >
-
       <div class="space-y-1">
         <!-- Option Diane -->
         <button
@@ -92,10 +106,10 @@ async function switchUser(id: UserId) {
             </div>
             <div class="flex items-center gap-1 text-[12px] text-emerald-600 dark:text-emerald-400 font-medium">
               <Truck class="h-3 w-3" />
-              <span>DISPATCHER (Répartitrice)</span>
+              <span>DISPATCHER ({{ t('roles.DISPATCHER.labelFeminine') }})</span>
             </div>
             <p class="mt-1 text-[12px] text-muted-foreground leading-snug">
-              Création, affectation, départs.
+              {{ t('roles.DISPATCHER.summary') }}
             </p>
           </div>
         </button>
@@ -120,7 +134,7 @@ async function switchUser(id: UserId) {
               <span>LOGISTICS_MANAGER</span>
             </div>
             <p class="mt-1 text-[12px] text-muted-foreground leading-snug">
-              Supervision + Validation des ordres.
+              {{ t('roles.LOGISTICS_MANAGER.summary') }}
             </p>
           </div>
         </button>
@@ -133,7 +147,7 @@ async function switchUser(id: UserId) {
           class="flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
         >
           <UserCheck class="h-4 w-auto" />
-          <span>Ouvrir l'écran d'accueil des profils</span>
+          <span>{{ t('users.openProfilePortal') }}</span>
         </router-link>
       </div>
     </div>

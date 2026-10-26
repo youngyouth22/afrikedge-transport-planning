@@ -5,9 +5,12 @@ import TransportStatusBadge from './TransportStatusBadge.vue'
 import DataTableCustom from '@/components/shared/DataTableCustom.vue'
 import TablePill from '@/components/shared/TablePill.vue'
 import { Truck, Calendar, ChevronRight, Boxes } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
+import { formatNumber, formatDate } from '@/i18n'
 
 const router = useRouter()
 const store = useTransportOrdersStore()
+const { t } = useI18n()
 
 function navigateToDetail(orderNo: string) {
   router.push(`/transport-orders/${encodeURIComponent(orderNo)}`)
@@ -24,22 +27,22 @@ function getFillRatio(totalKg: number, capacityKg: number) {
     <template #header>
       <tr>
         <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Ordre de transport
+          {{ t('transportOrders.table.transportOrder') }}
         </th>
         <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Véhicule
+          {{ t('transportOrders.table.vehicle') }}
         </th>
         <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Date de livraison
+          {{ t('transportOrders.table.deliveryDate') }}
         </th>
         <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
-          Commandes
+          {{ t('transportOrders.table.orders') }}
         </th>
         <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-          Remplissage / Capacité
+          {{ t('transportOrders.table.fillCapacity') }}
         </th>
         <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
-          Statut
+          {{ t('transportOrders.table.status') }}
         </th>
         <th class="w-12 px-5 py-3.5 text-right"></th>
       </tr>
@@ -61,7 +64,9 @@ function getFillRatio(totalKg: number, capacityKg: number) {
             <h5 class="font-medium text__16 text-Mtexttextprimary group-hover:text-primary transition-colors">
               {{ order.no }}
             </h5>
-            <p class="text__14 text-Mtexttextsecondary">Créé par {{ order.createdBy }}</p>
+            <p class="text__14 text-Mtexttextsecondary">
+              {{ t('transportOrders.table.createdBy', { user: order.createdBy }) }}
+            </p>
           </div>
         </div>
       </td>
@@ -69,7 +74,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
       <!-- Véhicule -->
       <td class="px-5 py-3.5">
         <div class="space-y-1">
-          <TablePill :icon="Truck" icon-class="text-Mmaincolorgreen" class=" bg-transparent! border-none! px-0!">
+          <TablePill :icon="Truck" icon-class="text-Mmaincolorgreen" class="bg-transparent! border-none! px-0!">
             {{ order.vehicleCode }}
           </TablePill>
           <div class="text-xs text-Mtexttextsecondary font-mono pl-0.5">
@@ -81,7 +86,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
       <!-- Date de livraison -->
       <td class="px-5 py-3.5">
         <TablePill :icon="Calendar" icon-class="text-Mtexttextsecondary">
-          {{ order.deliveryDate }}
+          {{ formatDate(order.deliveryDate) }}
         </TablePill>
       </td>
 
@@ -97,7 +102,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-xs">
             <span class="font-medium text-Mtexttextprimary text__14">
-              {{ order.totalWeightKg.toLocaleString('fr-FR') }} / {{ order.vehicleCapacityKg.toLocaleString('fr-FR') }} kg
+              {{ formatNumber(order.totalWeightKg) }} / {{ formatNumber(order.vehicleCapacityKg) }} {{ t('common.kg') }}
             </span>
             <span class="font-semibold text-Mtexttextsecondary">
               {{ getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) }} %
@@ -105,7 +110,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
           </div>
           <div class="h-2 w-full overflow-hidden bg-Msurfacesurfacesecondary border border-Mborderborderprimary!">
             <div
-              class="h-full  transition-all duration-300"
+              class="h-full transition-all duration-300"
               :class="[
                 getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) >= 90
                   ? 'bg-amber-500'

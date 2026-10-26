@@ -3,6 +3,7 @@ import UserSelectionView from '../views/UserSelectionView.vue'
 import SalesOrdersView from '../views/SalesOrdersView.vue'
 import TransportOrdersView from '../views/TransportOrdersView.vue'
 import TransportOrderDetailView from '../views/TransportOrderDetailView.vue'
+import { i18n } from '../i18n'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -18,31 +19,38 @@ const router = createRouter({
       path: '/select-user',
       name: 'select-user',
       component: UserSelectionView,
-      meta: { title: 'Choix du profil' },
+      meta: { titleKey: 'routes.selectUser' },
     },
     {
       path: '/sales-orders',
       name: 'sales-orders',
       component: SalesOrdersView,
-      meta: { title: 'Commandes à planifier' },
+      meta: { titleKey: 'routes.salesOrders' },
     },
     {
       path: '/transport-orders',
       name: 'transport-orders',
       component: TransportOrdersView,
-      meta: { title: 'Ordres de transport' },
+      meta: { titleKey: 'routes.transportOrders' },
     },
     {
       path: '/transport-orders/:no',
       name: 'transport-order-detail',
       component: TransportOrderDetailView,
-      meta: { title: 'Détail du transport' },
+      meta: { titleKey: 'routes.transportOrderDetail' },
     },
     {
       path: '/:pathMatch(.*)*',
       redirect: '/sales-orders',
     },
   ],
+})
+
+router.afterEach((to) => {
+  const titleKey = to.meta.titleKey as string | undefined
+  if (titleKey) {
+    document.title = `${i18n.global.t(titleKey)} · Afrikedge`
+  }
 })
 
 export default router

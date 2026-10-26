@@ -2,8 +2,11 @@
 import { useSalesOrdersStore } from '@/stores/sales-orders'
 import { PlusCircle, Weight, CheckSquare } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/i18n'
 
 const store = useSalesOrdersStore()
+const { t } = useI18n()
 
 defineEmits<{
   (e: 'open-assign-modal'): void
@@ -28,7 +31,7 @@ defineEmits<{
         <CheckSquare class="h-5 w-5 text-white" />
         <span class="text-base font-semibold">
           <strong class="text-white font-bold text-sm">{{ store.selectedCount }}</strong>
-          {{ store.selectedCount > 1 ? 'commandes' : 'commande' }}
+          {{ t('salesOrders.selectionBar.count', { n: store.selectedCount }, store.selectedCount) }}
         </span>
       </div>
 
@@ -36,11 +39,11 @@ defineEmits<{
       <div class="flex items-center gap-2 border-r border-slate-800 pr-4">
         <Weight class="h-5 w-5 text-white" />
         <div class="flex items-baseline gap-1">
-          <span class="text-base text-white">Poids total :</span>
+          <span class="text-base text-white">{{ t('salesOrders.selectionBar.totalWeight') }}</span>
           <strong class="text-sm font-bold text-white tracking-wide">
-            {{ store.selectedTotalWeight.toLocaleString('fr-FR') }}
+            {{ formatNumber(store.selectedTotalWeight) }}
           </strong>
-          <span class="text-xs text-emerald-400 font-medium">kg</span>
+          <span class="text-xs text-emerald-400 font-medium">{{ t('common.kg') }}</span>
         </div>
       </div>
 
@@ -48,19 +51,19 @@ defineEmits<{
       <Button
         variant="ghost"
         @click="store.clearSelection()"
-        class="h-[46px] hover:cursor-pointer text-base"
-        title="Désélectionner tout"
+        class="h-11.5 hover:cursor-pointer text-base"
+        :title="t('salesOrders.selectionBar.deselectAllTitle')"
       >
-        <span class="hidden sm:inline">Annuler</span>
+        <span class="hidden sm:inline">{{ t('salesOrders.selectionBar.cancel') }}</span>
       </Button>
 
       <!-- Action Button -->
       <Button
         @click="$emit('open-assign-modal')"
-        class="h-[46px] px-4 text-base hover:cursor-pointer"
+        class="h-11.5 px-4 text-base hover:cursor-pointer"
       >
         <PlusCircle class="h-4 w-4" />
-        <span>Ajouter à un transport</span>
+        <span>{{ t('salesOrders.selectionBar.addToTransport') }}</span>
       </Button>
     </div>
   </Transition>

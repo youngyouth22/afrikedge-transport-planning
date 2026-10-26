@@ -2,6 +2,7 @@
 import type { Component } from 'vue'
 import { Inbox } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { useI18n } from 'vue-i18n'
 import {
   Empty,
   EmptyContent,
@@ -11,7 +12,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     title?: string
     description?: string
@@ -19,8 +20,6 @@ withDefaults(
     icon?: Component
   }>(),
   {
-    title: 'Aucune donnée disponible',
-    description: 'Aucun élément ne correspond aux filtres appliqués.',
     icon: Inbox,
   },
 )
@@ -28,6 +27,8 @@ withDefaults(
 defineEmits<{
   (e: 'action'): void
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -36,9 +37,9 @@ defineEmits<{
       <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
         <component :is="icon" class="size-7 text-muted-foreground" />
       </EmptyMedia>
-      <EmptyTitle>{{ title }}</EmptyTitle>
+      <EmptyTitle>{{ title || t('common.noData') }}</EmptyTitle>
       <EmptyDescription>
-        {{ description }}
+        {{ description || t('common.noDataDesc') }}
       </EmptyDescription>
     </EmptyHeader>
     <EmptyContent v-if="actionLabel || $slots.action">
@@ -46,7 +47,7 @@ defineEmits<{
         <Button
           v-if="actionLabel"
           variant="outline"
-          class="h-[46px] hover:cursor-pointer"
+          class="h-11.5 hover:cursor-pointer"
           @click="$emit('action')"
         >
           {{ actionLabel }}
@@ -55,4 +56,3 @@ defineEmits<{
     </EmptyContent>
   </Empty>
 </template>
-

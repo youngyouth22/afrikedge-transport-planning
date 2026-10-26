@@ -1,0 +1,311 @@
+{
+  "app": {
+    "title": "TRANSIT",
+    "subtitle": "Afrikedge Logistics",
+    "portalTitle": "AFRIKEDGE TRANSPORT PLANNING",
+    "portalSubtitle": "Logistics Planning Portal",
+    "portalDescription": "Select your access profile to begin your operational session.",
+    "footerSwitchNote": "You can switch user profiles at any time in the application header."
+  },
+  "nav": {
+    "operations": "Operations",
+    "salesOrders": "Orders to Plan",
+    "transportOrders": "Transport Orders",
+    "logout": "Log Out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "routes": {
+    "selectUser": "Profile Selection",
+    "salesOrders": "Orders to Plan",
+    "transportOrders": "Transport Orders",
+    "transportOrderDetail": "Transport Order Details"
+  },
+  "roles": {
+    "DISPATCHER": {
+      "title": "DISPATCHER",
+      "label": "Dispatcher",
+      "labelFeminine": "Dispatcher",
+      "description": "Creates orders, assigns sales orders, and coordinates vehicle departures.",
+      "summary": "Creation, assignment, departures."
+    },
+    "LOGISTICS_MANAGER": {
+      "title": "LOGISTICS_MANAGER",
+      "label": "Logistics Manager",
+      "labelFeminine": "Logistics Manager",
+      "description": "Supervises routes, officially validates orders, and controls flows.",
+      "summary": "Supervision + Order validation."
+    }
+  },
+  "users": {
+    "switchUserTitle": "Switch to {name}",
+    "switchUserDescription": "Do you want to switch your access profile to {name} ({role})? Permissions will be updated immediately.",
+    "switchUserButton": "Switch",
+    "switchUserSuccessTitle": "Profile switched: {name} ({role})",
+    "switchUserSuccessDesc": "The permissions and actions displayed are now tailored to the {role} role.",
+    "openProfilePortal": "Open profile home screen",
+    "accessAs": "Continue as {name}",
+    "loginTitle": "Sign In: {name}",
+    "loginDescription": "You are about to start a session as {name} ({role}). Confirm sign in?",
+    "loginButton": "Sign In",
+    "loginSuccessTitle": "Logged in as {name} ({role})",
+    "loginSuccessDesc": "Welcome to the transport planning platform."
+  },
+  "auth": {
+    "logoutTitle": "Log Out",
+    "logoutDescription": "Are you sure you want to log out of your session? You will be redirected to the profile selection page.",
+    "logoutButton": "Log Out",
+    "cancel": "Cancel"
+  },
+  "common": {
+    "all": "All",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "remove": "Remove",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "loading": "Loading...",
+    "errorOccurred": "An error occurred",
+    "noData": "No data available",
+    "noDataDesc": "No items match the applied filters.",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {total}",
+    "kg": "kg",
+    "language": "Language",
+    "french": "Français",
+    "english": "English",
+    "switchLanguage": "Change language",
+    "currentLanguage": "Current language: {lang}"
+  },
+  "status": {
+    "salesOrder": {
+      "toPlan": "To Plan",
+      "planned": "Planned",
+      "inDelivery": "In Delivery"
+    },
+    "transportOrder": {
+      "draft": "Draft",
+      "validated": "Validated",
+      "departed": "Departed",
+      "unknown": "Unknown",
+      "draftEditable": "Draft (Editable)",
+      "validatedLocked": "Validated (Locked)",
+      "departedInDelivery": "Departed (In Delivery)"
+    }
+  },
+  "salesOrders": {
+    "title": "Orders to Plan",
+    "subtitle": "Overview of sales orders awaiting transport planning.",
+    "searchPlaceholder": "Search orders...",
+    "clearSearch": "Clear search",
+    "allCities": "All cities",
+    "clearFilter": "Clear filter and show all cities",
+    "refreshData": "Refresh data",
+    "table": {
+      "selectAllAria": "Select all orders",
+      "selectOrderAria": "Select order {no}",
+      "order": "Order",
+      "customer": "Customer",
+      "deliveryCity": "Delivery City",
+      "weight": "Weight",
+      "status": "Status",
+      "orderRef": "Order ref.",
+      "customerCode": "Code: {code}"
+    },
+    "empty": {
+      "title": "No orders found",
+      "description": "No orders awaiting planning match your search or filter criteria.",
+      "resetFilters": "Reset filters"
+    },
+    "selectionBar": {
+      "count": "{n} order | {n} orders",
+      "totalWeight": "Total weight:",
+      "cancel": "Cancel",
+      "deselectAllTitle": "Deselect all",
+      "addToTransport": "Add to transport"
+    },
+    "addToModal": {
+      "title": "Add to Transport",
+      "subtitle": "{count} order selected · {weight} kg | {count} orders selected · {weight} kg",
+      "modeNew": "Create new order",
+      "modeExisting": "Existing draft",
+      "activeVehicle": "Active vehicle",
+      "capacity": "Capacity: {capacity} kg",
+      "vehicleOption": "{code} — {plate} ({capacity} kg max)",
+      "deliveryDate": "Scheduled delivery date",
+      "selectDraft": "Select compatible draft",
+      "draftsAvailable": "{n} available | {n} available",
+      "draftOption": "{no} · {plate} · {date} ({weight} / {capacity} kg)",
+      "emptyDraftTitle": "No draft orders available",
+      "emptyDraftDesc": "No transport orders with Draft status are currently available.",
+      "gaugeTitle": "Forecast load gauge",
+      "used": "{percent}% used",
+      "forecastWeight": "Forecast weight:",
+      "maxCapacity": "Max capacity:",
+      "remainingAvailable": "Remaining weight available: {weight} kg",
+      "capacityExceeded": "Capacity exceeded by {weight} kg!",
+      "cancel": "Cancel",
+      "confirm": "Confirm assignment",
+      "submitting": "Assigning orders...",
+      "noOrderSelected": "No orders selected.",
+      "overCapacityError": "Maximum vehicle capacity exceeded.",
+      "selectVehicleError": "Please select a vehicle.",
+      "selectDateError": "Please select a delivery date.",
+      "selectDraftError": "Please select an existing draft.",
+      "successTitle": "Successfully assigned to order {no}",
+      "successDesc": "{count} order assigned ({weight} kg). | {count} orders assigned ({weight} kg).",
+      "viewDetail": "View details"
+    }
+  },
+  "transportOrders": {
+    "title": "Transport Orders",
+    "subtitle": "Operational route tracking and vehicle capacity control.",
+    "filterByDate": "Filter by date",
+    "clearDate": "Clear date",
+    "refreshList": "Refresh list",
+    "refresh": "Refresh",
+    "newTransport": "New Transport",
+    "table": {
+      "transportOrder": "Transport Order",
+      "vehicle": "Vehicle",
+      "deliveryDate": "Delivery Date",
+      "orders": "Orders",
+      "fillCapacity": "Fill / Capacity",
+      "status": "Status",
+      "createdBy": "Created by {user}"
+    },
+    "empty": {
+      "title": "No transport orders found",
+      "description": "No orders match the selected status or date filters.",
+      "createNew": "Create new order"
+    },
+    "createModal": {
+      "title": "Create Transport Order",
+      "description": "Initial status: Draft (0)",
+      "errorTitle": "Error during creation",
+      "assignedVehicle": "Assigned vehicle",
+      "maxCapacity": "Max capacity: {capacity} kg",
+      "selectVehicle": "Select a vehicle",
+      "scheduledDate": "Scheduled delivery date",
+      "datePlaceholder": "YYYY-MM-DD",
+      "openCalendar": "Open calendar",
+      "ruleVehicleUnique": "Rule: a vehicle may only be assigned to one transport order per date.",
+      "cancel": "Cancel",
+      "create": "Create Order",
+      "creating": "Creating...",
+      "successTitle": "Transport order {no} created successfully!",
+      "successDesc": "You can now assign sales orders to it.",
+      "validation": {
+        "vehicleRequired": "Please select a vehicle.",
+        "dateRequired": "Please select a delivery date.",
+        "dateInPast": "Delivery date cannot be in the past."
+      }
+    },
+    "detail": {
+      "loading": "Loading transport order details...",
+      "notFound": "Transport order not found.",
+      "createdBy": "Created by",
+      "validatedBy": "Validated by",
+      "addOrders": "Add orders",
+      "validateOrder": "Validate order",
+      "confirmDepart": "Confirm departure",
+      "departedBadge": "Transport departed for delivery",
+      "assignedVehicle": "Assigned vehicle",
+      "plateNo": "License plate: {plate}",
+      "ratedCapacity": "Rated capacity:",
+      "planning": "Planning",
+      "scheduledDeliveryDate": "Scheduled delivery date",
+      "currentState": "Current state:",
+      "transportedOrders": "Transported orders ({count})",
+      "totalCumulativeWeight": "Total cumulative weight:",
+      "emptyOrdersTitle": "No orders assigned to this transport",
+      "emptyOrdersDesc": "This order is an empty draft. Add orders to validate it and plan the route.",
+      "lineTable": {
+        "order": "Order",
+        "customer": "Customer",
+        "city": "City",
+        "weight": "Weight",
+        "status": "Status",
+        "lineLabel": "Transport line",
+        "customerCode": "Code: {code}",
+        "removeLineTitle": "Remove from transport"
+      },
+      "confirmRemove": {
+        "title": "Remove Order",
+        "description": "Are you sure you want to remove order {no} from this transport? It will return to \"To Plan\" status.",
+        "confirm": "Remove from order",
+        "cancel": "Cancel",
+        "success": "Order {no} removed successfully."
+      },
+      "confirmValidate": {
+        "title": "Validate Transport Order",
+        "description": "Are you sure you want to validate order {no}? Once validated, it will be locked against changes and ready for departure.",
+        "confirm": "Validate order",
+        "cancel": "Cancel",
+        "cannotValidateEmpty": "Validation not allowed",
+        "cannotValidateEmptyDesc": "A transport order must contain at least one sales order to be validated.",
+        "success": "Order {no} validated successfully!",
+        "successDesc": "The order is now locked and ready for departure."
+      },
+      "confirmDepart": {
+        "title": "Confirm Vehicle Departure",
+        "description": "Confirm vehicle departure for order {no}? Associated orders will switch to \"In Delivery\" status.",
+        "confirm": "Confirm departure",
+        "cancel": "Cancel",
+        "success": "Transport {no} marked as Departed!",
+        "successDesc": "All orders are now out for delivery."
+      }
+    },
+    "addLinesModal": {
+      "title": "Add Orders to {no}",
+      "description": "Select orders to plan that fit within the remaining vehicle capacity.",
+      "selectedWeight": "Selected weight:",
+      "newTotalWeight": "New total weight:",
+      "overCapacityWarning": "Capacity exceeded by {weight} kg",
+      "loading": "Loading orders...",
+      "emptyTitle": "No orders available",
+      "emptyDesc": "No sales orders available with To Plan status.",
+      "selectedOrdersCount": "{count} order selected | {count} orders selected",
+      "cancel": "Cancel",
+      "addOrders": "Add orders",
+      "adding": "Adding...",
+      "selectAtLeastOne": "Please select at least one order.",
+      "capacityExceeded": "Maximum vehicle capacity would be exceeded.",
+      "success": "{count} order added successfully! | {count} orders added successfully!"
+    },
+    "capacityGauge": {
+      "title": "Vehicle capacity",
+      "used": "used",
+      "remainingWeight": "Remaining weight",
+      "transportedWeight": "Transported weight:",
+      "maxAllowedLoad": "Maximum allowed load:",
+      "warningOverload": "Warning: transported weight exceeds maximum allowed capacity!"
+    }
+  },
+  "errors": {
+    "default": "An unexpected error occurred. Please try again.",
+    "network": "Unable to connect to the server. Please check your network connection.",
+    "unauthorized": "Session expired or user not identified.",
+    "forbidden": "You do not have permission to perform this action.",
+    "notFound": "The requested resource was not found.",
+    "conflict": "A data conflict occurred. Please refresh and try again.",
+    "transportNotFound": "Transport order \"{no}\" not found.",
+    "vehicleNotFound": "Vehicle \"{code}\" not found.",
+    "vehicleInactive": "This vehicle is inactive and cannot be assigned to a transport.",
+    "deliveryDateInPast": "Delivery date cannot be in the past.",
+    "vehicleAlreadyBooked": "Vehicle is already assigned to another transport for this delivery date.",
+    "emptyTransportCannotValidate": "A transport order must contain at least one sales order to be validated.",
+    "onlyLogisticsManagerCanValidate": "Only the Logistics Manager (LOGISTICS_MANAGER) can validate a transport order.",
+    "onlyDraftCanBeModified": "Only transport orders in Draft status can be modified.",
+    "onlyValidatedCanDepart": "Only a validated transport order can be marked as departed.",
+    "orderAlreadyAssigned": "Sales order {no} is already assigned to another transport order.",
+    "orderNotInStatusToPlan": "Sales order {no} is not in To Plan status.",
+    "orderLineNotFound": "Sales order {salesOrderNo} does not belong to transport order {transportNo}.",
+    "capacityExceeded": "Total weight ({weight} kg) exceeds maximum vehicle capacity ({capacity} kg)."
+  }
+}

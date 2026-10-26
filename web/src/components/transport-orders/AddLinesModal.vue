@@ -3,6 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { salesOrdersApi, type SalesOrderToPlan } from '@/api/sales-orders.api'
 import { transportOrdersApi } from '@/api/transport-orders.api'
 import { toast } from 'vue-sonner'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/i18n'
+import { getLocalizedErrorMessage } from '@/lib/error-translator'
 import {
   AlertTriangle,
   Loader2,
@@ -41,6 +44,7 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
+const { t } = useI18n()
 const availableOrders = ref<SalesOrderToPlan[]>([])
 const selectedNos = ref<Set<string>>(new Set())
 const isLoading = ref(false)
@@ -64,7 +68,7 @@ async function loadOrders() {
     const res = await salesOrdersApi.getToPlan(undefined, 1, 100)
     availableOrders.value = res.data
   } catch (err: any) {
-    errorMessage.value = err.message || 'Impossible de charger les commandes disponibles.'
+    errorMessage.value = getLocalizedErrorMessage(err)
   } finally {
     isLoading.value = false
   }
@@ -102,12 +106,12 @@ const isOverCapacity = computed(() => {
 
 async function handleConfirm() {
   if (selectedNos.value.size === 0) {
-    toast.error('Veuillez sélectionner au moins une commande.')
+    toast.error(t('transportOrders.addLinesModal.selectAtLeastOne'))
     return
   }
 
   if (isOverCapacity.value) {
-    toast.error('La capacité maximale du véhicule serait dépassée.')
+    toast.error(t('transportOrders.addLinesModal.capacityExceeded'))
     return
   }
 
@@ -118,11 +122,13 @@ async function handleConfirm() {
     const ids = Array.from(selectedNos.value)
     await transportOrdersApi.addLines(props.transportNo, ids)
 
-    toast.success(`${ids.length} commande(s) ajoutée(s) avec succès !`)
+    toast.success(
+      t('transportOrders.addLinesModal.success', { count: ids.length }, ids.length),
+    )
     emit('success')
     emit('close')
   } catch (err: any) {
-    errorMessage.value = err.message || "Erreur lors de l'ajout des commandes."
+    errorMessage.value = getLocalizedErrorMessage(err)
   } finally {
     isSubmitting.value = false
   }
@@ -135,13 +141,12 @@ async function handleConfirm() {
       <!-- Header -->
       <DialogHeader class="border-b border-border pb-4 shrink-0 text-left">
         <div class="flex items-center gap-3">
-         
           <div>
             <DialogTitle class="text-2xl font-bold text-foreground">
-              Ajouter des commandes à {{ transportNo }}
+              {{ t('transportOrders.addLinesModal.title', { no: transportNo }) }}
             </DialogTitle>
             <DialogDescription class="textbase text-muted-foreground mt-0.5">
-              Sélectionnez les commandes à planifier compatibles avec la capacité restante.
+              {{ t('transportOrders.addLinesModal.description') }}
             </DialogDescription>
           </div>
         </div>
@@ -154,7 +159,7 @@ async function handleConfirm() {
       >
         <AlertTriangle class="h-4 w-4 shrink-0 mt-0.5" />
         <div>
-          <span class="font-bold">Erreur : </span>
+          <span class="font-bold">{{ t('common.errorOccurred') }} : </span>
           <span>{{ errorMessage }}</span>
         </div>
       </div>
@@ -162,32 +167,32 @@ async function handleConfirm() {
       <!-- Live Capacity Summary -->
       <div class="rounded-2xl border border-border p-3.5 space-y-2 shrink-0">
         <div class="flex items-center justify-between">
-          <span class="text-muted-foreground">Poids sélectionné :</span>
-          <strong class="text-foreground">+{{ additionalWeightKg.toLocaleString('fr-FR') }} kg</strong>
+          <span class="text-muted-foreground">{{ t('transportOrders.addLinesModal.selectedWeight') }}</span>
+          <strong class="text-foreground">+{{ formatNumber(additionalWeightKg) }} {{ t('common.kg') }}</strong>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-muted-foreground">Nouveau poids total :</span>
+          <span class="text-muted-foreground">{{ t('transportOrders.addLinesModal.newTotalWeight') }}</span>
           <strong :class="isOverCapacity ? 'text-destructive font-black' : 'text-foreground'">
-            {{ newTotalWeightKg.toLocaleString('fr-FR') }} / {{ capacityKg.toLocaleString('fr-FR') }} kg
+            {{ formatNumber(newTotalWeightKg) }} / {{ formatNumber(capacityKg) }} {{ t('common.kg') }}
           </strong>
         </div>
         <div class="h-2 w-full overflow-hidden bg-muted">
           <div
-            class="h-full  transition-all duration-300"
+            class="h-full transition-all duration-300"
             :class="isOverCapacity ? 'bg-destructive' : 'bg-primary'"
             :style="{ width: `${Math.min(100, (newTotalWeightKg / (capacityKg || 1)) * 100)}%` }"
           />
         </div>
         <div v-if="isOverCapacity" class="text-[14px] font-medium text-destructive flex items-center gap-1">
           <AlertTriangle class="h-3.5 w-3.5" />
-          <span>Dépassement de capacité de {{ (newTotalWeightKg - capacityKg).toLocaleString('fr-FR') }} kg</span>
+          <span>{{ t('transportOrders.addLinesModal.overCapacityWarning', { weight: formatNumber(newTotalWeightKg - capacityKg) }) }} {{ t('common.kg') }}</span>
         </div>
       </div>
 
       <!-- Orders List Scrollable -->
       <div class="flex-1 overflow-y-auto min-h-55 rounded-2xl border border-border divide-y divide-border">
         <div v-if="isLoading" class="p-8 text-center text-xs text-muted-foreground">
-          Chargement des commandes...
+          {{ t('transportOrders.addLinesModal.loading') }}
         </div>
         <Empty
           v-else-if="availableOrders.length === 0"
@@ -197,9 +202,9 @@ async function handleConfirm() {
             <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
               <Inbox class="size-7 text-muted-foreground" />
             </EmptyMedia>
-            <EmptyTitle>Aucune commande disponible</EmptyTitle>
+            <EmptyTitle>{{ t('transportOrders.addLinesModal.emptyTitle') }}</EmptyTitle>
             <EmptyDescription>
-              Aucune commande disponible au statut À planifier.
+              {{ t('transportOrders.addLinesModal.emptyDesc') }}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -233,7 +238,7 @@ async function handleConfirm() {
               {{ order.deliveryCity }}
             </TablePill>
             <div class="font-medium text__14 text-Mtexttextprimary">
-              {{ order.totalWeightKg.toLocaleString('fr-FR') }} kg
+              {{ formatNumber(order.totalWeightKg) }} {{ t('common.kg') }}
             </div>
           </div>
         </div>
@@ -241,8 +246,8 @@ async function handleConfirm() {
 
       <!-- Footer Buttons -->
       <DialogFooter class="bg-transparent p-0 m-0 rounded-none border-0 flex flex-row items-center justify-between sm:justify-between w-full shrink-0">
-        <div class=" text-muted-foreground">
-          <strong class="text-foreground">{{ selectedNos.size }}</strong> commande(s) sélectionnée(s)
+        <div class="text-muted-foreground">
+          {{ t('transportOrders.addLinesModal.selectedOrdersCount', { count: selectedNos.size }, selectedNos.size) }}
         </div>
         <div class="flex items-center gap-3">
           <Button
@@ -251,7 +256,7 @@ async function handleConfirm() {
             class="h-11.5 px-5 hover:cursor-pointer"
             @click="$emit('close')"
           >
-            Annuler
+            {{ t('transportOrders.addLinesModal.cancel') }}
           </Button>
           <Button
             type="button"
@@ -262,7 +267,7 @@ async function handleConfirm() {
           >
             <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
             <CheckCircle2 v-else class="h-4 w-4" />
-            <span>{{ isSubmitting ? 'Ajout en cours...' : 'Ajouter les commandes' }}</span>
+            <span>{{ isSubmitting ? t('transportOrders.addLinesModal.adding') : t('transportOrders.addLinesModal.addOrders') }}</span>
           </Button>
         </div>
       </DialogFooter>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Loader2 } from '@lucide/vue'
 import type { ConfirmVariant, ButtonVariant } from '@/composables/useConfirmDialog'
+import { useI18n } from 'vue-i18n'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -24,14 +26,16 @@ export interface ConfirmDialogProps {
 }
 
 const props = withDefaults(defineProps<ConfirmDialogProps>(), {
-  title: 'Êtes-vous absolument sûr ?',
-  description: 'Cette action ne peut pas être annulée.',
-  confirmText: 'Continuer',
-  cancelText: 'Annuler',
   variant: 'default',
   confirmVariant: 'default',
   loading: false,
 })
+
+const { t } = useI18n()
+
+const displayTitle = computed(() => props.title || t('common.confirm'))
+const displayConfirmText = computed(() => props.confirmText || t('common.confirm'))
+const displayCancelText = computed(() => props.cancelText || t('common.cancel'))
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -67,9 +71,9 @@ function onOpenChange(val: boolean) {
     <AlertDialogContent class="sm:max-w-115 p-6">
       <AlertDialogHeader class="space-y-2">
         <AlertDialogTitle class="text-lg font-bold text-foreground">
-          {{ title }}
+          {{ displayTitle }}
         </AlertDialogTitle>
-        <AlertDialogDescription class="text-sm text-muted-foreground leading-relaxed">
+        <AlertDialogDescription v-if="description" class="text-sm text-muted-foreground leading-relaxed">
           {{ description }}
         </AlertDialogDescription>
       </AlertDialogHeader>
@@ -82,7 +86,7 @@ function onOpenChange(val: boolean) {
           @pointerdown="isConfirmed = false"
           @click="onCancel"
         >
-          {{ cancelText }}
+          {{ displayCancelText }}
         </AlertDialogCancel>
 
         <AlertDialogAction
@@ -93,7 +97,7 @@ function onOpenChange(val: boolean) {
           @click="onConfirm"
         >
           <Loader2 v-if="loading" class="h-4 w-4 animate-spin" />
-          <span>{{ confirmText }}</span>
+          <span>{{ displayConfirmText }}</span>
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

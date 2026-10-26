@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { AlertTriangle, RefreshCw } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import { useI18n } from 'vue-i18n'
 
 defineProps<{
   title?: string
@@ -11,6 +12,8 @@ defineProps<{
 defineEmits<{
   (e: 'retry'): void
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -19,7 +22,7 @@ defineEmits<{
       <AlertTriangle class="h-6 w-6" />
     </div>
     <h3 class="text-sm font-bold text-destructive">
-      {{ title || 'Une erreur est survenue' }}
+      {{ title || t('common.errorOccurred') }}
     </h3>
     <p class="mt-1 max-w-md text-xs text-muted-foreground">
       {{ message }}
@@ -27,11 +30,11 @@ defineEmits<{
     <Button
       v-if="canRetry !== false"
       variant="outline"
-      class="mt-4 h-[46px] hover:cursor-pointer inline-flex items-center gap-2"
+      class="mt-4 h-11.5 hover:cursor-pointer inline-flex items-center gap-2"
       @click="$emit('retry')"
     >
       <RefreshCw class="h-3.5 w-3.5" />
-      <span>Réessayer</span>
+      <span>{{ t('common.retry') }}</span>
     </Button>
   </div>
 </template>

@@ -7,6 +7,9 @@ import { toast } from 'vue-sonner'
 import { z } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
+import { useI18n } from 'vue-i18n'
+import { formatNumber } from '@/i18n'
+import { getLocalizedErrorMessage } from '@/lib/error-translator'
 import {
   type DateValue,
   getLocalTimeZone,
@@ -72,6 +75,7 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 const vehicles = ref<Vehicle[]>([])
 const isLoadingVehicles = ref(false)
 const isSubmitting = ref(false)
@@ -84,26 +88,28 @@ const minDateString = minCalendarDate.toString()
 const defaultTomorrow = minCalendarDate.add({ days: 1 }).toString()
 
 // Zod validation schema
-const transportSchema = z.object({
-  vehicleCode: z
-    .string({ required_error: 'Veuillez sélectionner un véhicule.' })
-    .min(1, 'Veuillez sélectionner un véhicule.'),
-  deliveryDate: z
-    .string({ required_error: 'Veuillez choisir une date de livraison.' })
-    .min(1, 'Veuillez choisir une date de livraison.')
-    .refine(
-      (val) => {
-        if (!val) return false
-        return val >= minDateString
-      },
-      { message: 'La date de livraison ne peut pas être dans le passé.' },
-    ),
-})
+const transportSchema = computed(() =>
+  z.object({
+    vehicleCode: z
+      .string({ required_error: t('transportOrders.createModal.validation.vehicleRequired') })
+      .min(1, t('transportOrders.createModal.validation.vehicleRequired')),
+    deliveryDate: z
+      .string({ required_error: t('transportOrders.createModal.validation.dateRequired') })
+      .min(1, t('transportOrders.createModal.validation.dateRequired'))
+      .refine(
+        (val) => {
+          if (!val) return false
+          return val >= minDateString
+        },
+        { message: t('transportOrders.createModal.validation.dateInPast') },
+      ),
+  }),
+)
 
-type TransportFormValues = z.infer<typeof transportSchema>
+type TransportFormValues = z.infer<typeof transportSchema.value>
 
 const { handleSubmit, resetForm, setFieldValue, values } = useForm<TransportFormValues>({
-  validationSchema: toTypedSchema(transportSchema),
+  validationSchema: computed(() => toTypedSchema(transportSchema.value)),
   initialValues: {
     vehicleCode: '',
     deliveryDate: defaultTomorrow,
@@ -137,7 +143,7 @@ async function loadVehicles() {
       setFieldValue('vehicleCode', list[0].code)
     }
   } catch (err: any) {
-    errorMessage.value = err.message || 'Erreur lors du chargement des véhicules.'
+    errorMessage.value = getLocalizedErrorMessage(err)
   } finally {
     isLoadingVehicles.value = false
   }
@@ -179,15 +185,15 @@ const onSubmit = handleSubmit(async (formValues) => {
       deliveryDate: formValues.deliveryDate,
     })
 
-    toast.success(`Ordre de transport ${res.no} créé avec succès !`, {
-      description: 'Vous pouvez maintenant lui assigner des commandes.',
+    toast.success(t('transportOrders.createModal.successTitle', { no: res.no }), {
+      description: t('transportOrders.createModal.successDesc'),
     })
 
     emit('success')
     emit('close')
     router.push(`/transport-orders/${res.no}`)
   } catch (err: any) {
-    errorMessage.value = err.message || "Erreur lors de la création de l'ordre de transport."
+    errorMessage.value = getLocalizedErrorMessage(err)
   } finally {
     isSubmitting.value = false
   }
@@ -202,10 +208,10 @@ const onSubmit = handleSubmit(async (formValues) => {
         <div class="flex items-center gap-3">
           <div class="space-y-0.5">
             <DialogTitle class="text-2xl font-bold text-foreground">
-              Créer un ordre de transport
+              {{ t('transportOrders.createModal.title') }}
             </DialogTitle>
             <DialogDescription class="text-base text-muted-foreground">
-              Statut initial : Brouillon (0)
+              {{ t('transportOrders.createModal.description') }}
             </DialogDescription>
           </div>
         </div>
@@ -217,7 +223,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         variant="destructive"
       >
         <AlertCircleIcon class="h-4 w-4" />
-        <AlertTitle>Erreur lors de la création</AlertTitle>
+        <AlertTitle>{{ t('transportOrders.createModal.errorTitle') }}</AlertTitle>
         <AlertDescription class="text-xs">
           {{ errorMessage }}
         </AlertDescription>
@@ -230,13 +236,13 @@ const onSubmit = handleSubmit(async (formValues) => {
           <FormItem class="space-y-1.5">
             <div class="flex items-center justify-between">
               <FormLabel class="text-sm font-medium text-foreground">
-                Véhicule affecté
+                {{ t('transportOrders.createModal.assignedVehicle') }}
               </FormLabel>
               <Label
                 v-if="selectedVehicle"
                 class="text-[14px] font-normal text-muted-foreground"
               >
-                Capacité max : {{ selectedVehicle.capacityKg.toLocaleString('fr-FR') }} kg
+                {{ t('transportOrders.createModal.maxCapacity', { capacity: formatNumber(selectedVehicle.capacityKg) }) }}
               </Label>
             </div>
             <Select
@@ -247,7 +253,7 @@ const onSubmit = handleSubmit(async (formValues) => {
             >
               <FormControl>
                 <SelectTrigger class="h-11.5 w-full rounded-xl text-xs font-medium cursor-pointer">
-                  <SelectValue placeholder="Sélectionner un véhicule" />
+                  <SelectValue :placeholder="t('transportOrders.createModal.selectVehicle')" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent position="popper" class="z-200 w-(--reka-select-trigger-width) max-h-60">
@@ -258,7 +264,7 @@ const onSubmit = handleSubmit(async (formValues) => {
                     :value="v.code"
                     class="cursor-pointer text-xs"
                   >
-                    {{ v.code }} — {{ v.plateNo }} ({{ v.capacityKg.toLocaleString('fr-FR') }} kg)
+                    {{ v.code }} — {{ v.plateNo }} ({{ formatNumber(v.capacityKg) }} {{ t('common.kg') }})
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -271,14 +277,14 @@ const onSubmit = handleSubmit(async (formValues) => {
         <FormField v-slot="{ componentField }" name="deliveryDate">
           <FormItem class="space-y-1.5 flex flex-col">
             <FormLabel class="text-sm font-medium text-foreground">
-              Date de livraison prévue
+              {{ t('transportOrders.createModal.scheduledDate') }}
             </FormLabel>
             <div class="relative flex items-center w-full">
               <FormControl>
                 <Input
                   v-bind="componentField"
                   type="text"
-                  placeholder="AAAA-MM-JJ"
+                  :placeholder="t('transportOrders.createModal.datePlaceholder')"
                   class="h-11.5 w-full rounded-xl pr-12 text-xs text-foreground cursor-pointer"
                   @click="isCalendarOpen = true"
                 />
@@ -290,7 +296,7 @@ const onSubmit = handleSubmit(async (formValues) => {
                     variant="ghost"
                     size="icon"
                     class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
-                    title="Ouvrir le calendrier"
+                    :title="t('transportOrders.createModal.openCalendar')"
                   >
                     <CalendarIcon class="h-4 w-4" />
                   </Button>
@@ -310,7 +316,7 @@ const onSubmit = handleSubmit(async (formValues) => {
               </Popover>
             </div>
             <FormDescription class="text-[11px] text-muted-foreground">
-              Règle : un véhicule ne peut être affecté qu'à un seul ordre par date.
+              {{ t('transportOrders.createModal.ruleVehicleUnique') }}
             </FormDescription>
             <FormMessage class="text-xs text-destructive" />
           </FormItem>
@@ -325,7 +331,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           class="h-11.5 px-5 rounded-xl cursor-pointer"
           @click="emit('close')"
         >
-          Annuler
+          {{ t('transportOrders.createModal.cancel') }}
         </Button>
         <Button
           type="submit"
@@ -336,7 +342,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         >
           <Loader2Icon v-if="isSubmitting" class="h-4 w-4 animate-spin" />
           <CheckCircle2Icon v-else class="h-4 w-4" />
-          <span>{{ isSubmitting ? 'Création en cours...' : 'Créer l\'ordre' }}</span>
+          <span>{{ isSubmitting ? t('transportOrders.createModal.creating') : t('transportOrders.createModal.create') }}</span>
         </Button>
       </DialogFooter>
     </DialogContent>

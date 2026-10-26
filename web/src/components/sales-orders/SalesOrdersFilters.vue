@@ -9,8 +9,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { useI18n } from 'vue-i18n'
 
 const store = useSalesOrdersStore()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -24,14 +26,14 @@ const store = useSalesOrdersStore()
         v-model="store.searchQuery"
         type="text"
         class="font-normal w-full text-[16px] placeholder:text-Mtexttextinvert placeholder:font-normal placeholder:text-[16px] bg-transparent border-none outline-none hover:focus:active:outline-none hover:focus:active:border-none text-foreground"
-        placeholder="Rechercher une commande..."
+        :placeholder="t('salesOrders.searchPlaceholder')"
       />
       <button
         v-if="store.searchQuery"
         type="button"
         @click="store.searchQuery = ''"
         class="text-Mtexttextsecondary hover:text-foreground cursor-pointer shrink-0 p-1"
-        title="Effacer la recherche"
+        :title="t('salesOrders.clearSearch')"
       >
         <X class="h-4 w-4" />
       </button>
@@ -49,11 +51,11 @@ const store = useSalesOrdersStore()
             class="w-48 h-11.5! border border-Mborderborderprimary! bg-background dark:bg-card text-[16px] font-normal cursor-pointer"
             :class="{ 'pr-8': store.cityFilter !== 'all' }"
           >
-            <SelectValue placeholder="Toutes les villes" class="text-[16px] font-normal" />
+            <SelectValue :placeholder="t('salesOrders.allCities')" class="text-[16px] font-normal" />
           </SelectTrigger>
           <SelectContent class="text-[16px] font-normal">
             <SelectItem value="all" class="text-[16px] font-normal">
-              Toutes les villes
+              {{ t('salesOrders.allCities') }}
             </SelectItem>
             <SelectItem
               v-for="city in store.availableCities"
@@ -72,7 +74,7 @@ const store = useSalesOrdersStore()
           type="button"
           @click.stop="store.setCityFilter('all')"
           class="absolute right-2.5 z-10 p-1 text-muted-foreground hover:text-foreground cursor-pointer rounded-full hover:bg-muted transition-colors"
-          title="Effacer le filtre et afficher toutes les villes"
+          :title="t('salesOrders.clearFilter')"
         >
           <X class="h-4 w-4" />
         </button>
@@ -85,7 +87,7 @@ const store = useSalesOrdersStore()
         size="icon"
         @click="store.fetchOrders()"
         :disabled="store.isLoading"
-        title="Rafraîchir les données"
+        :title="t('salesOrders.refreshData')"
         class="h-11.5 w-11.5 border border-Mborderborderprimary! bg-background dark:bg-card text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
       >
         <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': store.isLoading }" />

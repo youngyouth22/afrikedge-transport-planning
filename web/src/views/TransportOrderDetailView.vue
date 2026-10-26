@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TransportStatusBadge from '@/components/transport-orders/TransportStatusBadge.vue'
@@ -14,6 +14,9 @@ import { transportOrdersApi, type TransportOrderDetail } from '@/api/transport-o
 import { useUserStore } from '@/stores/user'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { toast } from 'vue-sonner'
+import { useI18n } from 'vue-i18n'
+import { formatNumber, formatDate } from '@/i18n'
+import { getLocalizedErrorMessage } from '@/lib/error-translator'
 import {
   Truck,
   Calendar,
@@ -39,6 +42,7 @@ import { Button } from '@/components/ui/button'
 const route = useRoute()
 const userStore = useUserStore()
 const { confirm, confirmDialogProps, handleConfirm, handleCancel } = useConfirmDialog()
+const { t } = useI18n()
 
 const orderNo = String(route.params.no || '')
 const order = ref<TransportOrderDetail | null>(null)
@@ -59,7 +63,7 @@ async function fetchDetail() {
   try {
     order.value = await transportOrdersApi.getOne(orderNo)
   } catch (err: any) {
-    error.value = err.message || "Impossible de charger le détail de l'ordre de transport."
+    error.value = getLocalizedErrorMessage(err)
   } finally {
     isLoading.value = false
   }
@@ -69,9 +73,10 @@ async function handleRemoveLine(salesOrderNo: string) {
   if (!order.value || order.value.status !== 0) return
 
   const confirmed = await confirm({
-    title: 'Retirer la commande',
-    description: `Êtes-vous sûr de vouloir retirer la commande ${salesOrderNo} de cet ordre ? Elle repassera au statut "À planifier".`,
-    confirmText: "Retirer de l'ordre",
+    title: t('transportOrders.detail.confirmRemove.title'),
+    description: t('transportOrders.detail.confirmRemove.description', { no: salesOrderNo }),
+    confirmText: t('transportOrders.detail.confirmRemove.confirm'),
+    cancelText: t('transportOrders.detail.confirmRemove.cancel'),
     confirmVariant: 'destructive',
     variant: 'destructive',
     icon: Trash2,
@@ -81,10 +86,10 @@ async function handleRemoveLine(salesOrderNo: string) {
   isActionLoading.value = true
   try {
     await transportOrdersApi.removeLine(orderNo, salesOrderNo)
-    toast.success(`Commande ${salesOrderNo} retirée avec succès.`)
+    toast.success(t('transportOrders.detail.confirmRemove.success', { no: salesOrderNo }))
     await fetchDetail()
   } catch (err: any) {
-    toast.error(err.message || "Erreur lors du retrait de la commande.")
+    toast.error(getLocalizedErrorMessage(err))
   } finally {
     isActionLoading.value = false
   }
@@ -98,16 +103,17 @@ async function handleValidate() {
   }
 
   if (order.value.orders.length === 0) {
-    toast.error('Validation impossible', {
-      description: "Un ordre de transport doit contenir au moins une commande pour être validé.",
+    toast.error(t('transportOrders.detail.confirmValidate.cannotValidateEmpty'), {
+      description: t('transportOrders.detail.confirmValidate.cannotValidateEmptyDesc'),
     })
     return
   }
 
   const confirmed = await confirm({
-    title: "Valider l'ordre de transport",
-    description: `Êtes-vous sûr de vouloir valider l'ordre ${orderNo} ? Une fois validé, il sera verrouillé contre toute modification et prêt pour le départ.`,
-    confirmText: "Valider l'ordre",
+    title: t('transportOrders.detail.confirmValidate.title'),
+    description: t('transportOrders.detail.confirmValidate.description', { no: orderNo }),
+    confirmText: t('transportOrders.detail.confirmValidate.confirm'),
+    cancelText: t('transportOrders.detail.confirmValidate.cancel'),
     confirmVariant: 'default',
     variant: 'default',
     icon: CheckCircle2,
@@ -117,12 +123,12 @@ async function handleValidate() {
   isActionLoading.value = true
   try {
     await transportOrdersApi.validate(orderNo)
-    toast.success(`L'ordre ${orderNo} a été validé avec succès !`, {
-      description: "L'ordre est désormais verrouillé et prêt pour le départ.",
+    toast.success(t('transportOrders.detail.confirmValidate.success', { no: orderNo }), {
+      description: t('transportOrders.detail.confirmValidate.successDesc'),
     })
     await fetchDetail()
   } catch (err: any) {
-    toast.error(err.message || "Erreur lors de la validation de l'ordre.")
+    toast.error(getLocalizedErrorMessage(err))
   } finally {
     isActionLoading.value = false
   }
@@ -132,9 +138,10 @@ async function handleDepart() {
   if (!order.value || order.value.status !== 1) return
 
   const confirmed = await confirm({
-    title: 'Confirmer le départ du véhicule',
-    description: `Confirmer le départ du véhicule pour l'ordre ${orderNo} ? Les commandes associées passeront au statut "En livraison".`,
-    confirmText: 'Confirmer le départ',
+    title: t('transportOrders.detail.confirmDepart.title'),
+    description: t('transportOrders.detail.confirmDepart.description', { no: orderNo }),
+    confirmText: t('transportOrders.detail.confirmDepart.confirm'),
+    cancelText: t('transportOrders.detail.confirmDepart.cancel'),
     confirmVariant: 'default',
     variant: 'default',
     icon: Navigation,
@@ -144,33 +151,40 @@ async function handleDepart() {
   isActionLoading.value = true
   try {
     await transportOrdersApi.depart(orderNo)
-    toast.success(`Le transport ${orderNo} est marqué comme Parti !`, {
-      description: 'Toutes les commandes sont désormais en cours de livraison.',
+    toast.success(t('transportOrders.detail.confirmDepart.success', { no: orderNo }), {
+      description: t('transportOrders.detail.confirmDepart.successDesc'),
     })
     await fetchDetail()
   } catch (err: any) {
-    toast.error(err.message || "Erreur lors du départ du transport.")
+    toast.error(getLocalizedErrorMessage(err))
   } finally {
     isActionLoading.value = false
   }
 }
+
+const statusLabel = computed(() => {
+  if (!order.value) return ''
+  if (order.value.status === 0) return t('status.transportOrder.draftEditable')
+  if (order.value.status === 1) return t('status.transportOrder.validatedLocked')
+  return t('status.transportOrder.departedInDelivery')
+})
 </script>
 
 <template>
   <AppLayout
     :breadcrumbs="[
-      { label: 'Ordres de transport', to: '/transport-orders' },
+      { label: t('transportOrders.title'), to: '/transport-orders' },
       { label: orderNo },
     ]"
   >
     <div v-if="isLoading" class="p-12 text-center text-xs text-muted-foreground">
       <Loader2 class="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
-      <span>Chargement du détail de l'ordre...</span>
+      <span>{{ t('transportOrders.detail.loading') }}</span>
     </div>
 
     <ErrorState
       v-else-if="error || !order"
-      :message="error || 'Ordre introuvable.'"
+      :message="error || t('transportOrders.detail.notFound')"
       @retry="fetchDetail()"
     />
 
@@ -185,9 +199,9 @@ async function handleDepart() {
             <TransportStatusBadge :status="order.status" />
           </div>
           <p class="text-xs text-muted-foreground">
-            Créé par <strong class="text-foreground">{{ order.createdBy }}</strong>
+            {{ t('transportOrders.detail.createdBy') }} <strong class="text-foreground">{{ order.createdBy }}</strong>
             <template v-if="order.validatedBy">
-              · Validé par <strong class="text-foreground">{{ order.validatedBy }}</strong>
+              · {{ t('transportOrders.detail.validatedBy') }} <strong class="text-foreground">{{ order.validatedBy }}</strong>
             </template>
           </p>
         </div>
@@ -196,7 +210,7 @@ async function handleDepart() {
         <div class="flex flex-wrap items-center gap-3">
           <!-- Si BROUILLON (0) -->
           <template v-if="order.status === 0">
-            <!-- Bouton Ajouter des commandes (Outline, action secondaire) -->
+            <!-- Bouton Ajouter des commandes -->
             <Button
               variant="outline"
               @click="isAddLinesModalOpen = true"
@@ -204,10 +218,10 @@ async function handleDepart() {
               class="h-11.5 px-4 cursor-pointer"
             >
               <Plus class="h-4 w-4" />
-              <span>Ajouter des commandes</span>
+              <span>{{ t('transportOrders.detail.addOrders') }}</span>
             </Button>
 
-            <!-- Bouton Valider l'ordre (Default, action principale) - Masqué si Diane n'a pas le droit -->
+            <!-- Bouton Valider l'ordre - Masqué si Dispatcher n'a pas le droit -->
             <Button
               v-if="userStore.isLogisticsManager"
               variant="default"
@@ -217,7 +231,7 @@ async function handleDepart() {
             >
               <Loader2 v-if="isActionLoading" class="h-4 w-4 animate-spin" />
               <CheckCircle2 v-else class="h-4 w-4" />
-              <span>Valider l'ordre</span>
+              <span>{{ t('transportOrders.detail.validateOrder') }}</span>
             </Button>
           </template>
 
@@ -231,7 +245,7 @@ async function handleDepart() {
             >
               <Loader2 v-if="isActionLoading" class="h-4 w-4 animate-spin" />
               <Navigation v-else class="h-4 w-4" />
-              <span>Confirmer le départ</span>
+              <span>{{ t('transportOrders.detail.confirmDepart') }}</span>
             </Button>
           </template>
 
@@ -239,7 +253,7 @@ async function handleDepart() {
           <template v-else>
             <div class="inline-flex items-center gap-2 rounded bg-blue-500/10 border border-blue-500/20 px-4 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
               <Truck class="h-4 w-4" />
-              <span>Transport parti en livraison</span>
+              <span>{{ t('transportOrders.detail.departedBadge') }}</span>
             </div>
           </template>
         </div>
@@ -251,17 +265,17 @@ async function handleDepart() {
         <div class="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
           <div class="flex items-center gap-2 text-muted-foreground text-xs font-bold uppercase tracking-wider">
             <Truck class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Véhicule affecté</span>
+            <span>{{ t('transportOrders.detail.assignedVehicle') }}</span>
           </div>
           <div>
             <div class="text-2xl font-black text-foreground">{{ order.vehicleCode }}</div>
             <div class="text-xs font-mono text-muted-foreground font-semibold mt-0.5">
-              Immatriculation : {{ order.vehiclePlateNo }}
+              {{ t('transportOrders.detail.plateNo', { plate: order.vehiclePlateNo }) }}
             </div>
           </div>
           <div class="border-t border-border pt-3 text-xs text-muted-foreground flex justify-between">
-            <span>Capacité nominale :</span>
-            <strong class="text-foreground">{{ order.vehicleCapacityKg.toLocaleString('fr-FR') }} kg</strong>
+            <span>{{ t('transportOrders.detail.ratedCapacity') }}</span>
+            <strong class="text-foreground">{{ formatNumber(order.vehicleCapacityKg) }} {{ t('common.kg') }}</strong>
           </div>
         </div>
 
@@ -269,18 +283,18 @@ async function handleDepart() {
         <div class="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
           <div class="flex items-center gap-2 text-muted-foreground text-xs font-bold uppercase tracking-wider">
             <Calendar class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Planification</span>
+            <span>{{ t('transportOrders.detail.planning') }}</span>
           </div>
           <div>
-            <div class="text-2xl font-black text-foreground">{{ order.deliveryDate }}</div>
+            <div class="text-2xl font-black text-foreground">{{ formatDate(order.deliveryDate) }}</div>
             <div class="text-xs text-muted-foreground font-semibold mt-0.5">
-              Date de livraison prévue
+              {{ t('transportOrders.detail.scheduledDeliveryDate') }}
             </div>
           </div>
           <div class="border-t border-border pt-3 text-xs text-muted-foreground flex justify-between">
-            <span>État actuel :</span>
+            <span>{{ t('transportOrders.detail.currentState') }}</span>
             <strong class="text-foreground">
-              {{ order.status === 0 ? 'Brouillon (Modifiable)' : order.status === 1 ? 'Validé (Verrouillé)' : 'Parti (En livraison)' }}
+              {{ statusLabel }}
             </strong>
           </div>
         </div>
@@ -298,11 +312,11 @@ async function handleDepart() {
           <div class="flex items-center gap-2">
             <Boxes class="h-5 w-5 text-primary" />
             <h3 class="text-lg font-bold text-foreground">
-              Commandes transportées ({{ order.orders.length }})
+              {{ t('transportOrders.detail.transportedOrders', { count: order.orders.length }) }}
             </h3>
           </div>
           <div class="text-xs font-bold text-muted-foreground">
-            Poids total cumulé : <span class="text-foreground font-black">{{ order.totalWeightKg.toLocaleString('fr-FR') }} kg</span>
+            {{ t('transportOrders.detail.totalCumulativeWeight') }} <span class="text-foreground font-black">{{ formatNumber(order.totalWeightKg) }} {{ t('common.kg') }}</span>
           </div>
         </div>
 
@@ -312,9 +326,9 @@ async function handleDepart() {
             <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
               <Boxes class="size-7 text-muted-foreground" />
             </EmptyMedia>
-            <EmptyTitle>Aucune commande affectée à cet ordre</EmptyTitle>
+            <EmptyTitle>{{ t('transportOrders.detail.emptyOrdersTitle') }}</EmptyTitle>
             <EmptyDescription>
-              Cet ordre est un brouillon vide. Ajoutez des commandes pour pouvoir le valider et planifier la tournée.
+              {{ t('transportOrders.detail.emptyOrdersDesc') }}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent v-if="order.status === 0">
@@ -324,7 +338,7 @@ async function handleDepart() {
               @click="isAddLinesModalOpen = true"
             >
               <Plus class="h-4 w-4" />
-              <span>Ajouter des commandes</span>
+              <span>{{ t('transportOrders.detail.addOrders') }}</span>
             </Button>
           </EmptyContent>
         </Empty>
@@ -334,19 +348,19 @@ async function handleDepart() {
             <template #header>
               <tr>
                 <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-                  Commande
+                  {{ t('transportOrders.detail.lineTable.order') }}
                 </th>
                 <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-                  Client
+                  {{ t('transportOrders.detail.lineTable.customer') }}
                 </th>
                 <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">
-                  Ville
+                  {{ t('transportOrders.detail.lineTable.city') }}
                 </th>
                 <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-right">
-                  Poids
+                  {{ t('transportOrders.detail.lineTable.weight') }}
                 </th>
                 <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider text-center">
-                  Statut
+                  {{ t('transportOrders.detail.lineTable.status') }}
                 </th>
                 <th v-if="order.status === 0" class="w-16 px-5 py-3.5 text-right"></th>
               </tr>
@@ -365,7 +379,7 @@ async function handleDepart() {
                   </div>
                   <div>
                     <h5 class="font-medium text__16 text-Mtexttextprimary">{{ line.salesOrderNo }}</h5>
-                    <p class="text__14 text-Mtexttextsecondary">Ligne transport</p>
+                    <p class="text__14 text-Mtexttextsecondary">{{ t('transportOrders.detail.lineTable.lineLabel') }}</p>
                   </div>
                 </div>
               </td>
@@ -373,7 +387,7 @@ async function handleDepart() {
               <!-- Client -->
               <td class="px-5 py-3">
                 <div class="font-medium text__14 text-Mtexttextprimary">{{ line.customerName }}</div>
-                <div class="text-xs text-Mtexttextsecondary">Code : {{ line.customerNo }}</div>
+                <div class="text-xs text-Mtexttextsecondary">{{ t('transportOrders.detail.lineTable.customerCode', { code: line.customerNo }) }}</div>
               </td>
 
               <!-- Ville -->
@@ -386,14 +400,14 @@ async function handleDepart() {
               <!-- Poids -->
               <td class="px-5 py-3 text-right">
                 <span class="font-medium text__14 text-Mtexttextprimary">
-                  {{ line.totalWeightKg.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }} kg
+                  {{ formatNumber(line.totalWeightKg, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }} {{ t('common.kg') }}
                 </span>
               </td>
 
               <!-- Statut de la commande -->
               <td class="px-5 py-3 text-center">
                 <TableStatusBadge :variant="line.status === 1 ? 'warning' : 'info'">
-                  {{ line.status === 1 ? 'Planifiée' : 'En livraison' }}
+                  {{ line.status === 1 ? t('status.salesOrder.planned') : t('status.salesOrder.inDelivery') }}
                 </TableStatusBadge>
               </td>
 
@@ -404,7 +418,7 @@ async function handleDepart() {
                   size="icon"
                   @click="handleRemoveLine(line.salesOrderNo)"
                   :disabled="isActionLoading"
-                  title="Retirer du transport"
+                  :title="t('transportOrders.detail.lineTable.removeLineTitle')"
                   class="h-8 w-8 text-muted-foreground hover:text-destructive hover:border-destructive/40 cursor-pointer"
                 >
                   <Trash2 class="h-4 w-4" />
