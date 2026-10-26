@@ -239,6 +239,9 @@ npm run build
 
 ## 11. Limites Connues et Améliorations Futures
 
+- **Responsivité des Écrans (Non Finalisée)** : L'interface est actuellement conçue et optimisée prioritairement pour des postes de travail bureautiques / desktop de planification logistique. La responsivité complète sur tablettes et smartphones reste à parfaire.
+- **Expérience Utilisateur (UX)** : Avec davantage de temps, l'ergonomie pourrait être poussée encore plus loin : interactions par glisser-déposer (*drag & drop*) des commandes vers les tournées, animations de transition fluides, raccourcis clavier pour les répartiteurs et visualisations cartographiques interactives des villes de livraison.
+- **Sécurité Backend Renforcée** : Doubler les protections serveur actuelles : mise en place d'un rate-limiting granulaire (Throttler), validation cryptographique des échanges, journalisation d'audit immuable des actions sensibles (création/validation/départ) et isolation réseau stricte des connexions SQL.
 - **Authentification Réelle** : L'évaluation imposait de résoudre l'utilisateur via l'en-tête `X-User-Id`. En environnement de production réel, une authentification moderne basée sur JWT / OAuth2 (Keycloak, Auth0) avec cookies HttpOnly sécurisés remplacerait cette simulation.
 - **Contrôle Optimiste par `rowversion`** : La colonne `timestamp` (rowversion) de SQL Server est présente dans le schéma et pourrait être exploitée pour un contrôle de concurrence optimiste explicite côté frontend (ex: détection de conflits si un autre utilisateur a modifié la fiche entre-temps).
 - **Tests End-to-End Navigateur** : Ajout d'une suite Playwright simulant les clics utilisateur, le glisser-déposer de tournées et le parcours de validation complet.
