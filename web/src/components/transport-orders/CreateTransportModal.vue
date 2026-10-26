@@ -4,7 +4,63 @@ import { useRouter } from 'vue-router'
 import { vehiclesApi, type Vehicle } from '@/api/vehicles.api'
 import { transportOrdersApi } from '@/api/transport-orders.api'
 import { toast } from 'vue-sonner'
-import { X, Truck, Calendar, CheckCircle2, Loader2, AlertTriangle } from '@lucide/vue'
+import { z } from 'zod'
+import { toTypedSchema } from '@vee-validate/zod'
+import { useForm } from 'vee-validate'
+import {
+  type DateValue,
+  getLocalTimeZone,
+  parseDate,
+  today,
+} from '@internationalized/date'
+
+// Shadcn UI components
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert'
+
+// Icons
+import {
+  AlertCircleIcon,
+  CalendarIcon,
+  CheckCircle2Icon,
+  Loader2Icon,
+} from '@lucide/vue'
 
 const props = defineProps<{
   open: boolean
@@ -17,14 +73,42 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const vehicles = ref<Vehicle[]>([])
-const isLoading = ref(false)
+const isLoadingVehicles = ref(false)
 const isSubmitting = ref(false)
 const errorMessage = ref<string | null>(null)
+const isCalendarOpen = ref(false)
 
-const selectedVehicleCode = ref<string>('')
-const deliveryDate = ref<string>('')
+// Internationalized date limits
+const minCalendarDate = today(getLocalTimeZone())
+const minDateString = minCalendarDate.toString()
+const defaultTomorrow = minCalendarDate.add({ days: 1 }).toString()
 
-const todayDate = new Date().toISOString().slice(0, 10)
+// Zod validation schema
+const transportSchema = z.object({
+  vehicleCode: z
+    .string({ required_error: 'Veuillez sélectionner un véhicule.' })
+    .min(1, 'Veuillez sélectionner un véhicule.'),
+  deliveryDate: z
+    .string({ required_error: 'Veuillez choisir une date de livraison.' })
+    .min(1, 'Veuillez choisir une date de livraison.')
+    .refine(
+      (val) => {
+        if (!val) return false
+        return val >= minDateString
+      },
+      { message: 'La date de livraison ne peut pas être dans le passé.' },
+    ),
+})
+
+type TransportFormValues = z.infer<typeof transportSchema>
+
+const { handleSubmit, resetForm, setFieldValue, values } = useForm<TransportFormValues>({
+  validationSchema: toTypedSchema(transportSchema),
+  initialValues: {
+    vehicleCode: '',
+    deliveryDate: defaultTomorrow,
+  },
+})
 
 onMounted(() => {
   loadVehicles()
@@ -35,50 +119,64 @@ watch(
   (val) => {
     if (val) {
       errorMessage.value = null
-      const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
-      deliveryDate.value = tomorrow
+      isCalendarOpen.value = false
+      setFieldValue('deliveryDate', defaultTomorrow)
       loadVehicles()
+    } else {
+      resetForm()
     }
   },
 )
 
 async function loadVehicles() {
-  isLoading.value = true
+  isLoadingVehicles.value = true
   try {
     const list = await vehiclesApi.getActive()
     vehicles.value = list
-    if (list.length > 0 && !selectedVehicleCode.value) {
-      selectedVehicleCode.value = list[0].code
+    if (list.length > 0 && !values.vehicleCode) {
+      setFieldValue('vehicleCode', list[0].code)
     }
   } catch (err: any) {
     errorMessage.value = err.message || 'Erreur lors du chargement des véhicules.'
   } finally {
-    isLoading.value = false
+    isLoadingVehicles.value = false
   }
 }
 
 const selectedVehicle = computed(() => {
-  return vehicles.value.find((v) => v.code === selectedVehicleCode.value)
+  return vehicles.value.find((v) => v.code === values.vehicleCode)
 })
 
-async function handleSubmit() {
-  if (!selectedVehicleCode.value) {
-    toast.error('Veuillez sélectionner un véhicule.')
-    return
+const calendarDateValue = computed<DateValue | undefined>(() => {
+  if (!values.deliveryDate) return undefined
+  try {
+    return parseDate(values.deliveryDate)
+  } catch {
+    return undefined
   }
+})
 
-  if (!deliveryDate.value) {
-    toast.error('Veuillez choisir une date de livraison.')
-    return
+function handleCalendarSelect(date: DateValue | undefined) {
+  if (date) {
+    setFieldValue('deliveryDate', date.toString())
+    isCalendarOpen.value = false
   }
+}
 
-  isSubmitting.value = true
+function onOpenChange(isOpen: boolean) {
+  if (!isOpen) {
+    emit('close')
+  }
+}
+
+const onSubmit = handleSubmit(async (formValues) => {
   errorMessage.value = null
+  isSubmitting.value = true
 
   try {
     const res = await transportOrdersApi.create({
-      vehicleCode: selectedVehicleCode.value,
-      deliveryDate: deliveryDate.value,
+      vehicleCode: formValues.vehicleCode,
+      deliveryDate: formValues.deliveryDate,
     })
 
     toast.success(`Ordre de transport ${res.no} créé avec succès !`, {
@@ -87,118 +185,160 @@ async function handleSubmit() {
 
     emit('success')
     emit('close')
-    // Ouverture automatique du détail après création pour fluidifier l'UX
     router.push(`/transport-orders/${res.no}`)
   } catch (err: any) {
     errorMessage.value = err.message || "Erreur lors de la création de l'ordre de transport."
   } finally {
     isSubmitting.value = false
   }
-}
+})
 </script>
 
 <template>
-  <div
-    v-if="open"
-    class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
-  >
-    <div
-      class="relative w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200"
-    >
+  <Dialog :open="open" @update:open="onOpenChange">
+    <DialogContent class="sm:max-w-md p-6 rounded-3xl border border-border bg-card shadow-2xl">
       <!-- Header -->
-      <div class="flex items-center justify-between border-b border-border pb-4">
-        <div class="flex items-center gap-2.5">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Truck class="h-5 w-5" />
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-foreground">Créer un ordre de transport</h3>
-            <p class="text-xs text-muted-foreground">Statut initial : Brouillon (0)</p>
+      <DialogHeader class="pb-4">
+        <div class="flex items-center gap-3">
+          <div class="space-y-0.5">
+            <DialogTitle class="text-2xl font-bold text-foreground">
+              Créer un ordre de transport
+            </DialogTitle>
+            <DialogDescription class="text-base text-muted-foreground">
+              Statut initial : Brouillon (0)
+            </DialogDescription>
           </div>
         </div>
-        <button
-          type="button"
-          @click="$emit('close')"
-          class="rounded-xl p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition"
-        >
-          <X class="h-4 w-4" />
-        </button>
-      </div>
+      </DialogHeader>
 
-      <!-- Erreur globale si présente -->
-      <div
+      <!-- Erreur globale avec composant Alert Shadcn -->
+      <Alert
         v-if="errorMessage"
-        class="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive"
+        variant="destructive"
       >
-        <AlertTriangle class="h-4 w-4 shrink-0 mt-0.5" />
-        <div>
-          <span class="font-bold">Erreur : </span>
-          <span>{{ errorMessage }}</span>
-        </div>
-      </div>
+        <AlertCircleIcon class="h-4 w-4" />
+        <AlertTitle>Erreur lors de la création</AlertTitle>
+        <AlertDescription class="text-xs">
+          {{ errorMessage }}
+        </AlertDescription>
+      </Alert>
 
-      <!-- Form Inputs -->
-      <div class="space-y-4">
-        <!-- Véhicule actif -->
-        <div class="space-y-1.5">
-          <label class="text-xs font-bold text-foreground flex items-center justify-between">
-            <span>Véhicule affecté</span>
-            <span v-if="selectedVehicle" class="text-[11px] font-normal text-muted-foreground">
-              Capacité max : {{ selectedVehicle.capacityKg.toLocaleString('fr-FR') }} kg
-            </span>
-          </label>
-          <select
-            v-model="selectedVehicleCode"
-            class="w-full rounded-xl border border-border bg-background p-2.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-          >
-            <option
-              v-for="v in vehicles"
-              :key="v.code"
-              :value="v.code"
+      <!-- Formulaire avec composants Shadcn et validation Zod -->
+      <form id="create-transport-form" @submit.prevent="onSubmit" class="space-y-4">
+        <!-- Véhicule actif (Select Shadcn) -->
+        <FormField v-slot="{ componentField }" name="vehicleCode">
+          <FormItem class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <FormLabel class="text-sm font-medium text-foreground">
+                Véhicule affecté
+              </FormLabel>
+              <Label
+                v-if="selectedVehicle"
+                class="text-[14px] font-normal text-muted-foreground"
+              >
+                Capacité max : {{ selectedVehicle.capacityKg.toLocaleString('fr-FR') }} kg
+              </Label>
+            </div>
+            <Select
+              v-bind="componentField"
+              :model-value="values.vehicleCode"
+              @update:model-value="(val) => setFieldValue('vehicleCode', val ? String(val) : '')"
+              :disabled="isLoadingVehicles"
             >
-              {{ v.code }} — {{ v.plateNo }} ({{ v.capacityKg.toLocaleString('fr-FR') }} kg)
-            </option>
-          </select>
-        </div>
+              <FormControl>
+                <SelectTrigger class="h-11.5 w-full rounded-xl text-xs font-medium cursor-pointer">
+                  <SelectValue placeholder="Sélectionner un véhicule" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent position="popper" class="z-200 w-(--reka-select-trigger-width) max-h-60">
+                <SelectGroup>
+                  <SelectItem
+                    v-for="v in vehicles"
+                    :key="v.code"
+                    :value="v.code"
+                    class="cursor-pointer text-xs"
+                  >
+                    {{ v.code }} — {{ v.plateNo }} ({{ v.capacityKg.toLocaleString('fr-FR') }} kg)
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FormMessage class="text-xs text-destructive" />
+          </FormItem>
+        </FormField>
 
-        <!-- Date de livraison -->
-        <div class="space-y-1.5">
-          <label class="text-xs font-bold text-foreground flex items-center gap-1.5">
-            <Calendar class="h-3.5 w-3.5 text-muted-foreground" />
-            <span>Date de livraison prévue</span>
-          </label>
-          <input
-            v-model="deliveryDate"
-            type="date"
-            :min="todayDate"
-            class="w-full rounded-xl border border-border bg-background p-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-          />
-          <p class="text-[11px] text-muted-foreground">
-            Règle : un véhicule ne peut être affecté qu'à un seul ordre par date.
-          </p>
-        </div>
-      </div>
+        <!-- Date de livraison (Input 46px + Popover + Calendar Shadcn) -->
+        <FormField v-slot="{ componentField }" name="deliveryDate">
+          <FormItem class="space-y-1.5 flex flex-col">
+            <FormLabel class="text-sm font-medium text-foreground">
+              Date de livraison prévue
+            </FormLabel>
+            <div class="relative flex items-center w-full">
+              <FormControl>
+                <Input
+                  v-bind="componentField"
+                  type="text"
+                  placeholder="AAAA-MM-JJ"
+                  class="h-11.5 w-full rounded-xl pr-12 text-xs text-foreground cursor-pointer"
+                  @click="isCalendarOpen = true"
+                />
+              </FormControl>
+              <Popover v-model:open="isCalendarOpen">
+                <PopoverTrigger as-child>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg"
+                    title="Ouvrir le calendrier"
+                  >
+                    <CalendarIcon class="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  class="z-200 w-auto p-0 rounded-2xl border border-border shadow-2xl bg-popover"
+                  align="end"
+                  :side-offset="6"
+                >
+                  <Calendar
+                    :model-value="calendarDateValue"
+                    :min-value="minCalendarDate"
+                    initial-focus
+                    @update:model-value="handleCalendarSelect"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <FormDescription class="text-[11px] text-muted-foreground">
+              Règle : un véhicule ne peut être affecté qu'à un seul ordre par date.
+            </FormDescription>
+            <FormMessage class="text-xs text-destructive" />
+          </FormItem>
+        </FormField>
+      </form>
 
       <!-- Footer Buttons -->
-      <div class="flex items-center justify-end gap-3 border-t border-border pt-4">
-        <button
+      <DialogFooter class="-mx-6 -mb-6 mt-2 rounded-b-3xl border-t border-border bg-muted/40 p-4 flex flex-row items-center justify-end gap-3">
+        <Button
           type="button"
-          @click="$emit('close')"
-          class="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent transition"
+          variant="outline"
+          class="h-11.5 px-5 rounded-xl cursor-pointer"
+          @click="emit('close')"
         >
           Annuler
-        </button>
-        <button
-          type="button"
-          @click="handleSubmit"
-          :disabled="isSubmitting || !selectedVehicleCode || !deliveryDate"
-          class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        </Button>
+        <Button
+          type="submit"
+          form="create-transport-form"
+          variant="default"
+          class="h-11.5 px-5 rounded-xl cursor-pointer inline-flex items-center gap-2"
+          :disabled="isSubmitting || isLoadingVehicles"
         >
-          <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
-          <CheckCircle2 v-else class="h-4 w-4" />
+          <Loader2Icon v-if="isSubmitting" class="h-4 w-4 animate-spin" />
+          <CheckCircle2Icon v-else class="h-4 w-4" />
           <span>{{ isSubmitting ? 'Création en cours...' : 'Créer l\'ordre' }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

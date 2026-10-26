@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSalesOrdersStore } from '@/stores/sales-orders'
-import { PlusCircle, Weight, X, CheckSquare } from '@lucide/vue'
+import { PlusCircle, Weight, CheckSquare } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 
 const store = useSalesOrdersStore()
@@ -48,20 +48,20 @@ defineEmits<{
       <Button
         variant="ghost"
         @click="store.clearSelection()"
-        class=" hover:cursor-pointer text-base"
+        class="h-[46px] hover:cursor-pointer text-base"
         title="Désélectionner tout"
       >
         <span class="hidden sm:inline">Annuler</span>
-      </button>
+      </Button>
 
       <!-- Action Button -->
       <Button
         @click="$emit('open-assign-modal')"
-        class=" text-base rounded-full h-11 px-3"
+        class="h-[46px] px-4 text-base hover:cursor-pointer"
       >
         <PlusCircle class="h-4 w-4" />
         <span>Ajouter à un transport</span>
-      </button>
+      </Button>
     </div>
   </Transition>
 </template>

@@ -20,6 +20,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Button } from '@/components/ui/button'
 
 const props = defineProps<{
@@ -182,13 +189,20 @@ async function handleConfirm() {
         <div v-if="isLoading" class="p-8 text-center text-xs text-muted-foreground">
           Chargement des commandes...
         </div>
-        <div
+        <Empty
           v-else-if="availableOrders.length === 0"
-          class="flex flex-col items-center justify-center p-8 text-center"
+          class="border border-dashed p-6 my-4 mx-4"
         >
-          <Inbox class="h-8 w-8 text-muted-foreground mb-2" />
-          <p class="text-xs text-muted-foreground">Aucune commande disponible au statut À planifier.</p>
-        </div>
+          <EmptyHeader>
+            <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
+              <Inbox class="size-7 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Aucune commande disponible</EmptyTitle>
+            <EmptyDescription>
+              Aucune commande disponible au statut À planifier.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
         <div
           v-for="order in availableOrders"
           :key="order.salesOrderNo"
@@ -234,7 +248,7 @@ async function handleConfirm() {
           <Button
             type="button"
             variant="outline"
-            class="h-11.5 px-5 cursor-pointer"
+            class="h-11.5 px-5 hover:cursor-pointer"
             @click="$emit('close')"
           >
             Annuler
@@ -242,7 +256,7 @@ async function handleConfirm() {
           <Button
             type="button"
             variant="default"
-            class="h-11.5 px-5 cursor-pointer inline-flex items-center gap-2"
+            class="h-11.5 px-5 hover:cursor-pointer inline-flex items-center gap-2"
             :disabled="isSubmitting || selectedNos.size === 0 || isOverCapacity"
             @click="handleConfirm"
           >

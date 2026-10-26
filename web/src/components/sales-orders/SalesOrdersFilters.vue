@@ -46,7 +46,7 @@ const store = useSalesOrdersStore()
           @update:model-value="(val) => store.setCityFilter(val as string)"
         >
           <SelectTrigger
-            class="w-48 h-[46px]! !h-[46px] border border-Mborderborderprimary! bg-background dark:bg-card text-[16px] font-normal cursor-pointer"
+            class="w-48 h-11.5! border border-Mborderborderprimary! bg-background dark:bg-card text-[16px] font-normal cursor-pointer"
             :class="{ 'pr-8': store.cityFilter !== 'all' }"
           >
             <SelectValue placeholder="Toutes les villes" class="text-[16px] font-normal" />
@@ -86,7 +86,7 @@ const store = useSalesOrdersStore()
         @click="store.fetchOrders()"
         :disabled="store.isLoading"
         title="Rafraîchir les données"
-        class="h-[46px] w-[46px] border border-Mborderborderprimary! bg-background dark:bg-card text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+        class="h-11.5 w-11.5 border border-Mborderborderprimary! bg-background dark:bg-card text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
       >
         <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': store.isLoading }" />
       </Button>

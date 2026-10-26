@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AlertTriangle, RefreshCw } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 
 defineProps<{
   title?: string
@@ -23,14 +24,14 @@ defineEmits<{
     <p class="mt-1 max-w-md text-xs text-muted-foreground">
       {{ message }}
     </p>
-    <button
+    <Button
       v-if="canRetry !== false"
-      type="button"
+      variant="outline"
+      class="mt-4 h-[46px] hover:cursor-pointer inline-flex items-center gap-2"
       @click="$emit('retry')"
-      class="mt-4 inline-flex items-center gap-2 rounded-xl bg-card border border-border px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-accent transition"
     >
       <RefreshCw class="h-3.5 w-3.5" />
       <span>Réessayer</span>
-    </button>
+    </Button>
   </div>
 </template>

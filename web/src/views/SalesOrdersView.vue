@@ -7,8 +7,17 @@ import SelectionActionBar from '@/components/sales-orders/SelectionActionBar.vue
 import AddToTransportModal from '@/components/sales-orders/AddToTransportModal.vue'
 import TableSkeleton from '@/components/shared/TableSkeleton.vue'
 import TablePagination from '@/components/shared/TablePagination.vue'
-import EmptyState from '@/components/shared/EmptyState.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
+import { Inbox } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { useSalesOrdersStore } from '@/stores/sales-orders'
 
 const store = useSalesOrdersStore()
@@ -88,13 +97,26 @@ onMounted(() => {
         @retry="store.fetchOrders()"
       />
 
-      <EmptyState
-        v-else-if="store.filteredOrders.length === 0"
-        title="Aucune commande trouvée"
-        description="Aucune commande à planifier ne correspond à vos critères de recherche ou de filtre."
-        action-label="Réinitialiser les filtres"
-        @action="() => { store.searchQuery = ''; store.setCityFilter('all') }"
-      />
+      <Empty v-else-if="store.filteredOrders.length === 0" class="border border-dashed p-10">
+        <EmptyHeader>
+          <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
+            <Inbox class="size-7 text-muted-foreground" />
+          </EmptyMedia>
+          <EmptyTitle>Aucune commande trouvée</EmptyTitle>
+          <EmptyDescription>
+            Aucune commande à planifier ne correspond à vos critères de recherche ou de filtre.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button
+            variant="outline"
+            class="h-[46px] hover:cursor-pointer"
+            @click="() => { store.searchQuery = ''; store.setCityFilter('all') }"
+          >
+            Réinitialiser les filtres
+          </Button>
+        </EmptyContent>
+      </Empty>
 
       <div v-else class="space-y-4">
         <SalesOrdersTable />

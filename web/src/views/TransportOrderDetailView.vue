@@ -26,6 +26,14 @@ import {
   MapPin,
   FileText,
 } from '@lucide/vue'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Button } from '@/components/ui/button'
 
 const route = useRoute()
@@ -193,7 +201,7 @@ async function handleDepart() {
               variant="outline"
               @click="isAddLinesModalOpen = true"
               :disabled="isActionLoading"
-              class="h-[46px] px-4 cursor-pointer"
+              class="h-11.5 px-4 cursor-pointer"
             >
               <Plus class="h-4 w-4" />
               <span>Ajouter des commandes</span>
@@ -205,7 +213,7 @@ async function handleDepart() {
               variant="default"
               @click="handleValidate"
               :disabled="isActionLoading || order.orders.length === 0"
-              class="h-[46px] px-4 cursor-pointer"
+              class="h-11.5 px-4 cursor-pointer"
             >
               <Loader2 v-if="isActionLoading" class="h-4 w-4 animate-spin" />
               <CheckCircle2 v-else class="h-4 w-4" />
@@ -219,7 +227,7 @@ async function handleDepart() {
               variant="default"
               @click="handleDepart"
               :disabled="isActionLoading"
-              class="h-11.5 px-5 cursor-pointer"
+              class="h-11.5 px-5 hover:cursor-pointer"
             >
               <Loader2 v-if="isActionLoading" class="h-4 w-4 animate-spin" />
               <Navigation v-else class="h-4 w-4" />
@@ -298,25 +306,31 @@ async function handleDepart() {
           </div>
         </div>
 
-        <div class="overflow-hidden border border-Mborderborderprimary! bg-card shadow-xs">
-          <div v-if="order.orders.length === 0" class="p-12 text-center space-y-3">
-            <Boxes class="h-10 w-10 text-muted-foreground mx-auto" />
-            <div class="text-sm font-bold text-foreground">Aucune commande affectée à cet ordre</div>
-            <p class="text-xs text-muted-foreground max-w-sm mx-auto">
+        <!-- Empty State shadcn -->
+        <Empty v-if="order.orders.length === 0" class="border border-dashed p-10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
+              <Boxes class="size-7 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>Aucune commande affectée à cet ordre</EmptyTitle>
+            <EmptyDescription>
               Cet ordre est un brouillon vide. Ajoutez des commandes pour pouvoir le valider et planifier la tournée.
-            </p>
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent v-if="order.status === 0">
             <Button
-              v-if="order.status === 0"
               variant="default"
+              class="h-11.5 hover:cursor-pointer"
               @click="isAddLinesModalOpen = true"
-              class="cursor-pointer"
             >
               <Plus class="h-4 w-4" />
               <span>Ajouter des commandes</span>
             </Button>
-          </div>
+          </EmptyContent>
+        </Empty>
 
-          <DataTableCustom v-else>
+        <div v-else class="overflow-hidden border border-Mborderborderprimary! bg-card shadow-xs">
+          <DataTableCustom>
             <template #header>
               <tr>
                 <th class="px-5 py-3.5 text-xs uppercase font-semibold text-Mtexttextsecondary tracking-wider">

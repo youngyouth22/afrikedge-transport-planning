@@ -78,7 +78,7 @@ function onOpenChange(val: boolean) {
         <AlertDialogCancel
           :disabled="loading"
           variant="outline"
-          class="h-11.5 px-5  cursor-pointer "
+          class="h-11.5 px-5 hover:cursor-pointer"
           @pointerdown="isConfirmed = false"
           @click="onCancel"
         >
@@ -88,7 +88,7 @@ function onOpenChange(val: boolean) {
         <AlertDialogAction
           :variant="variant === 'destructive' || confirmVariant === 'destructive' ? 'destructive' : 'default'"
           :disabled="loading"
-          class="h-11.5 px-5 cursor-pointer inline-flex items-center justify-center gap-2"
+          class="h-11.5 px-5 hover:cursor-pointer inline-flex items-center justify-center gap-2"
           @pointerdown="isConfirmed = true"
           @click="onConfirm"
         >

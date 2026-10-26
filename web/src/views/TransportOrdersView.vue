@@ -7,13 +7,20 @@ import TransportOrdersTable from '@/components/transport-orders/TransportOrdersT
 import CreateTransportModal from '@/components/transport-orders/CreateTransportModal.vue'
 import TableSkeleton from '@/components/shared/TableSkeleton.vue'
 import TablePagination from '@/components/shared/TablePagination.vue'
-import EmptyState from '@/components/shared/EmptyState.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
 import { useTransportOrdersStore } from '@/stores/transport-orders'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { Plus, Calendar as CalendarIcon, RefreshCw, X } from '@lucide/vue'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Plus, Calendar as CalendarIcon, RefreshCw, X, Truck } from '@lucide/vue'
 
 const store = useTransportOrdersStore()
 const isCreateModalOpen = ref(false)
@@ -185,13 +192,26 @@ const statusOptions = [
         @retry="store.fetchOrders()"
       />
 
-      <EmptyState
-        v-else-if="store.filteredOrders.length === 0"
-        title="Aucun ordre de transport trouvé"
-        description="Aucun ordre ne correspond aux filtres de statut ou de date sélectionnés."
-        action-label="Créer un nouvel ordre"
-        @action="isCreateModalOpen = true"
-      />
+      <Empty v-else-if="store.filteredOrders.length === 0" class="border border-dashed p-10">
+        <EmptyHeader>
+          <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
+            <Truck class="size-7 text-muted-foreground" />
+          </EmptyMedia>
+          <EmptyTitle>Aucun ordre de transport trouvé</EmptyTitle>
+          <EmptyDescription>
+            Aucun ordre ne correspond aux filtres de statut ou de date sélectionnés.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button
+            variant="outline"
+            class="h-11.5 hover:cursor-pointer"
+            @click="isCreateModalOpen = true"
+          >
+            Créer un nouvel ordre
+          </Button>
+        </EmptyContent>
+      </Empty>
 
       <div v-else class="space-y-4">
         <TransportOrdersTable />

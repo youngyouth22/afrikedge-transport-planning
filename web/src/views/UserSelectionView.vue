@@ -116,7 +116,7 @@ async function selectUser(id: UserId) {
             <CardFooter class="p-0 mt-8 w-full flex justify-center">
               <Button
                 variant="default"
-                class="h-11.5 px-6 rounded-xl text-sm font-semibold cursor-pointer"
+                class="h-11.5 px-6 text-sm font-semibold hover:cursor-pointer"
                 @click.stop="selectUser('diane')"
               >
                 <span>Accéder en tant que Diane</span>
@@ -179,7 +179,7 @@ async function selectUser(id: UserId) {
             <CardFooter class="p-0 mt-8 w-full flex justify-center">
               <Button
                 variant="default"
-                class="h-[46px] px-6 rounded-xl text-sm font-semibold cursor-pointer"
+                class="h-11.5 px-6 text-sm font-semibold hover:cursor-pointer"
                 @click.stop="selectUser('eric')"
               >
                 <span>Accéder en tant que Eric</span>

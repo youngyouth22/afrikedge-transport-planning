@@ -14,6 +14,14 @@ import {
   Boxes,
   Loader2,
 } from '@lucide/vue'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Button } from '@/components/ui/button'
 
 const props = defineProps<{
   open: boolean
@@ -187,7 +195,7 @@ async function handleSubmit() {
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+    class="fixed inset-0 z-150 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
   >
     <div
       class="relative w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
@@ -297,9 +305,17 @@ async function handleSubmit() {
               <span>Sélectionner un brouillon compatible</span>
               <span class="text-[11px] text-muted-foreground">{{ draftTransports.length }} disponible(s)</span>
             </label>
-            <div v-if="draftTransports.length === 0" class="text-xs text-muted-foreground italic p-2 border border-dashed rounded-xl">
-              Aucun ordre au statut Brouillon n'est actuellement disponible.
-            </div>
+            <Empty v-if="draftTransports.length === 0" class="border border-dashed p-4">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" class="size-18 rounded-2xl mb-3">
+                  <Truck class="size-7 text-muted-foreground" />
+                </EmptyMedia>
+                <EmptyTitle>Aucun ordre brouillon disponible</EmptyTitle>
+                <EmptyDescription>
+                  Aucun ordre au statut Brouillon n'est actuellement disponible.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
             <select
               v-else
               v-model="selectedDraftNo"
@@ -361,23 +377,25 @@ async function handleSubmit() {
 
       <!-- Footer Buttons -->
       <div class="flex items-center justify-end gap-3 border-t border-border pt-4">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          class="h-11.5 px-5 hover:cursor-pointer"
           @click="$emit('close')"
-          class="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent transition"
         >
           Annuler
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          @click="handleSubmit"
+          variant="default"
+          class="h-11.5 px-5 hover:cursor-pointer inline-flex items-center gap-2"
           :disabled="isSubmitting || isOverCapacity || targetCapacityKg <= 0"
-          class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="handleSubmit"
         >
           <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
           <CheckCircle2 v-else class="h-4 w-4" />
           <span>{{ isSubmitting ? 'Affectation en cours...' : 'Confirmer l\'affectation' }}</span>
-        </button>
+        </Button>
       </div>
     </div>
   </div>
