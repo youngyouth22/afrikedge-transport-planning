@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSalesOrdersStore } from '@/stores/sales-orders'
-import { PlusCircle, Weight, CheckSquare } from '@lucide/vue'
+import { PlusCircle, Weight } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { useI18n } from 'vue-i18n'
 import { formatNumber } from '@/i18n'
@@ -24,13 +24,12 @@ defineEmits<{
   >
     <div
       v-if="store.selectedCount > 0"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 rounded-full border border-emerald-500/30 bg-olive-950 px-3 py-3.5 shadow-2xl text-white"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 rounded-full bg-olive-950 px-3 py-3.5 shadow-2xl text-white"
     >
       <!-- Compteur sélection -->
       <div class="flex items-center gap-2 border-r border-slate-800 pr-4">
-        <CheckSquare class="h-5 w-5 text-white" />
+        <!-- <CheckSquare class="h-5 w-5 text-white" /> -->
         <span class="text-base font-semibold">
-          <strong class="text-white font-bold text-sm">{{ store.selectedCount }}</strong>
           {{ t('salesOrders.selectionBar.count', { n: store.selectedCount }, store.selectedCount) }}
         </span>
       </div>
@@ -60,7 +59,7 @@ defineEmits<{
       <!-- Action Button -->
       <Button
         @click="$emit('open-assign-modal')"
-        class="h-11.5 px-4 text-base hover:cursor-pointer"
+        class="h-11.5 px-4 text-base hover:cursor-pointer rounded-full"
       >
         <PlusCircle class="h-4 w-4" />
         <span>{{ t('salesOrders.selectionBar.addToTransport') }}</span>
