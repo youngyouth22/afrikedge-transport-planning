@@ -27,14 +27,24 @@
       "label": "Dispatcher",
       "labelFeminine": "Dispatcher",
       "description": "Creates orders, assigns sales orders, and coordinates vehicle departures.",
-      "summary": "Creation, assignment, departures."
+      "summary": "Creation, assignment, departures.",
+      "features": [
+        "Create & manage transport orders",
+        "Assign sales orders to vehicles",
+        "Confirm vehicle departures"
+      ]
     },
     "LOGISTICS_MANAGER": {
       "title": "LOGISTICS_MANAGER",
       "label": "Logistics Manager",
       "labelFeminine": "Logistics Manager",
       "description": "Supervises routes, officially validates orders, and controls flows.",
-      "summary": "Supervision + Order validation."
+      "summary": "Supervision + Order validation.",
+      "features": [
+        "Official order validation (exclusive role)",
+        "Fleet capacity and route supervision",
+        "Confirm vehicle departures"
+      ]
     }
   },
   "users": {

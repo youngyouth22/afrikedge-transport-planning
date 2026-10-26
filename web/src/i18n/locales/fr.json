@@ -27,14 +27,24 @@
       "label": "Répartiteur",
       "labelFeminine": "Répartitrice",
       "description": "Crée les ordres, affecte les commandes et coordonne les départs des véhicules.",
-      "summary": "Création, affectation, départs."
+      "summary": "Création, affectation, départs.",
+      "features": [
+        "Création & gestion des ordres de transport",
+        "Affectation des commandes à planifier",
+        "Départ des véhicules validés"
+      ]
     },
     "LOGISTICS_MANAGER": {
       "title": "LOGISTICS_MANAGER",
       "label": "Responsable Logistique",
       "labelFeminine": "Responsable Logistique",
       "description": "Supervise les tournées, valide officiellement les ordres et contrôle les flux.",
-      "summary": "Supervision + Validation des ordres."
+      "summary": "Supervision + Validation des ordres.",
+      "features": [
+        "Validation officielle des ordres (rôle requis)",
+        "Contrôle des tournées et capacités véhicules",
+        "Départ des véhicules validés"
+      ]
     }
   },
   "users": {
