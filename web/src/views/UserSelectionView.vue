@@ -1,0 +1,135 @@
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { useUserStore, AVAILABLE_USERS, type UserId } from '@/stores/user'
+import { toast } from 'vue-sonner'
+import { ArrowRight, ShieldCheck, Truck, UserCircle2 } from '@lucide/vue'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+function selectUser(id: UserId) {
+  userStore.setUser(id)
+  const user = AVAILABLE_USERS[id]
+  toast.success(`Connecté en tant que ${user.name} (${user.roleLabel})`, {
+    description: 'Bienvenue sur la plateforme de planification des transports.',
+  })
+  router.push('/sales-orders')
+}
+</script>
+
+<template>
+  <div class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-950 p-6 text-white selection:bg-emerald-500 selection:text-white">
+    <!-- Fond décoratif avec halo subtil Emerald -->
+    <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-emerald-500/15 blur-[140px]" />
+    <div class="pointer-events-none absolute -bottom-40 left-1/2 -translate-x-1/2 h-[450px] w-[700px] rounded-full bg-teal-600/10 blur-[130px]" />
+
+    <div class="relative z-10 w-full max-w-4xl space-y-12 text-center">
+      <!-- En-tête / Branding -->
+      <div class="space-y-4">
+        <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-4 py-1.5 text-xs font-semibold tracking-wide text-emerald-400 backdrop-blur-md">
+          <Truck class="h-3.5 w-3.5 text-emerald-400" />
+          <span>AFRIKEDGE TRANSPORT PLANNING</span>
+        </div>
+        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl text-white">
+          Portail de Planification Logistique
+        </h1>
+        <p class="mx-auto max-w-xl text-base text-slate-400 sm:text-lg">
+          Sélectionnez votre profil d'accès pour démarrer votre session opérationnelle.
+        </p>
+      </div>
+
+      <!-- Les 2 Cartes avec cycle avatar au centre -->
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 max-w-3xl mx-auto">
+        <!-- Carte Diane (DISPATCHER) -->
+        <button
+          type="button"
+          @click="selectUser('diane')"
+          class="group relative flex flex-col items-center rounded-3xl border border-slate-800 bg-slate-900/80 p-8 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/60 hover:bg-slate-900 hover:shadow-2xl hover:shadow-emerald-500/20 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4 focus:ring-offset-slate-950"
+        >
+          <div class="absolute inset-0 rounded-3xl bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+          <!-- Cycle Avatar au centre -->
+          <div class="relative mb-6">
+            <div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-1 shadow-xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40">
+              <div class="flex h-full w-full items-center justify-center rounded-full bg-slate-950 font-bold text-emerald-400 text-3xl tracking-wider">
+                DI
+              </div>
+            </div>
+            <div class="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 bg-emerald-500 text-slate-950 shadow-md">
+              <Truck class="h-4 w-4" />
+            </div>
+          </div>
+
+          <!-- Nom et rôle en bas -->
+          <div class="relative z-10 space-y-2">
+            <h2 class="text-2xl font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+              Diane
+            </h2>
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-300">
+              <span>DISPATCHER</span>
+              <span class="text-emerald-500">·</span>
+              <span class="text-slate-300 font-normal">Répartitrice</span>
+            </div>
+            <p class="mt-3 text-sm text-slate-400 leading-relaxed max-w-xs">
+              {{ AVAILABLE_USERS.diane.description }}
+            </p>
+          </div>
+
+          <!-- Bouton d'action CTA survol -->
+          <div class="relative z-10 mt-8 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-xs font-semibold text-emerald-300 transition-all duration-300 group-hover:bg-emerald-500 group-hover:text-slate-950">
+            <span>Accéder en tant que Diane</span>
+            <ArrowRight class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+          </div>
+        </button>
+
+        <!-- Carte Eric (LOGISTICS_MANAGER) -->
+        <button
+          type="button"
+          @click="selectUser('eric')"
+          class="group relative flex flex-col items-center rounded-3xl border border-slate-800 bg-slate-900/80 p-8 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-500/60 hover:bg-slate-900 hover:shadow-2xl hover:shadow-emerald-500/20 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-4 focus:ring-offset-slate-950"
+        >
+          <div class="absolute inset-0 rounded-3xl bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+          <!-- Cycle Avatar au centre -->
+          <div class="relative mb-6">
+            <div class="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-700 to-emerald-400 p-1 shadow-xl transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/40">
+              <div class="flex h-full w-full items-center justify-center rounded-full bg-slate-950 font-bold text-emerald-400 text-3xl tracking-wider">
+                ER
+              </div>
+            </div>
+            <div class="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 bg-emerald-500 text-slate-950 shadow-md">
+              <ShieldCheck class="h-4 w-4" />
+            </div>
+          </div>
+
+          <!-- Nom et rôle en bas -->
+          <div class="relative z-10 space-y-2">
+            <h2 class="text-2xl font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+              Eric
+            </h2>
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-300">
+              <span>LOGISTICS_MANAGER</span>
+              <span class="text-emerald-500">·</span>
+              <span class="text-slate-300 font-normal">Responsable Logistique</span>
+            </div>
+            <p class="mt-3 text-sm text-slate-400 leading-relaxed max-w-xs">
+              {{ AVAILABLE_USERS.eric.description }}
+            </p>
+          </div>
+
+          <!-- Bouton d'action CTA survol -->
+          <div class="relative z-10 mt-8 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-xs font-semibold text-emerald-300 transition-all duration-300 group-hover:bg-emerald-500 group-hover:text-slate-950">
+            <span>Accéder en tant que Eric</span>
+            <ArrowRight class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+          </div>
+        </button>
+      </div>
+
+      <!-- Info note -->
+      <div class="flex items-center justify-center gap-2 text-xs text-slate-500">
+        <UserCircle2 class="h-4 w-4 text-emerald-500/60" />
+        <span>Vous pourrez changer d'utilisateur à tout moment dans l'en-tête de l'application.</span>
+      </div>
+    </div>
+  </div>
+</template>

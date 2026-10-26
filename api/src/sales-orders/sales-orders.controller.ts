@@ -13,6 +13,6 @@ export class SalesOrdersController {
   findToPlan(
     @Query() query: FindSalesOrdersToPlanDto,
   ): Promise<SalesOrderToPlan[]> {
-    return this.service.findToPlan(query.city);
+    return this.service.findToPlan(query.city, query.page, query.limit);
   }
 }

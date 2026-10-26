@@ -14,7 +14,11 @@ export interface SalesOrderToPlan {
 export class SalesOrdersService {
   constructor(private readonly database: DatabaseProvider) {}
 
-  async findToPlan(city?: string): Promise<SalesOrderToPlan[]> {
+  async findToPlan(
+    city?: string,
+    page?: number,
+    limit?: number,
+  ): Promise<SalesOrderToPlan[]> {
     const request = this.database.connection.request();
 
     let query = `
@@ -23,7 +27,7 @@ export class SalesOrdersService {
         so.[Customer No_] AS customerNo,
         so.[Customer Name] AS customerName,
         so.[Delivery City] AS deliveryCity,
-        so.[Total Weight (kg)] AS totalWeightKg,
+        CAST(so.[Total Weight (kg)] AS float) AS totalWeightKg,
         so.[Status] AS status
       FROM [Sales Order] AS so
       WHERE so.[Status] = @status
@@ -38,8 +42,22 @@ export class SalesOrdersService {
 
     query += ` ORDER BY so.[No_]`;
 
+    if (page && limit && page > 0 && limit > 0) {
+      const offset = (page - 1) * limit;
+      query += ` OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
+      request.input('offset', offset);
+      request.input('limit', limit);
+    }
+
     const result = await request.query<SalesOrderToPlan>(query);
 
-    return result.recordset;
+    return result.recordset.map((row) => ({
+      salesOrderNo: row.salesOrderNo,
+      customerNo: row.customerNo,
+      customerName: row.customerName,
+      deliveryCity: row.deliveryCity,
+      totalWeightKg: Number(row.totalWeightKg),
+      status: Number(row.status),
+    }));
   }
 }

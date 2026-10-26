@@ -38,7 +38,7 @@ describe('SalesOrdersController', () => {
 
   it('should return sales orders to plan', async () => {
     const result = await controller.findToPlan({ city: 'Douala' });
-    expect(service.findToPlan).toHaveBeenCalledWith('Douala');
+    expect(service.findToPlan).toHaveBeenCalledWith('Douala', undefined, undefined);
     expect(result).toHaveLength(1);
     expect(result[0].salesOrderNo).toBe('SO-1008');
   });
