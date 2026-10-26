@@ -251,12 +251,12 @@ npm run build
 ## 12. Temps Réellement Passé
 
 
-- **Temps total consacré** : `[À compléter par le candidat : ex. 6h45]`
-  - Prise en main du sujet, examen du schéma SQL et démarrage Docker : `[ex. 1h]`
-  - Développement API NestJS, requêtes SQL paramétrées, transactions et règles métier : `[ex. 1h30]`
-  - Développement Frontend Vue 3, Pinia, écrans, jauge de capacité et multi-sélection : `[ex. 3h15]`
-  - Internationalisation bilingue FR/EN et documentation Swagger : `[ex. 20 min]`
-  - Tests unitaires, corrections de robustesse, audit et rédaction du README : `[ex. 20 min]`
+- **Temps total consacré** : 6h45
+  - Prise en main du sujet, examen du schéma SQL et démarrage Docker : 1h
+  - Développement API NestJS, requêtes SQL paramétrées, transactions et règles métier : 1h15
+  - Développement Frontend Vue 3, Pinia, écrans, jauge de capacité et multi-sélection : 3h30
+  - Internationalisation bilingue FR/EN et documentation Swagger : 20 min
+  - Tests unitaires, corrections de robustesse, audit et rédaction du README : 20 min
 
 ---
 
