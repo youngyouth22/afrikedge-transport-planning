@@ -37,7 +37,7 @@ function handleRowClick(order: SalesOrderToPlan) {
             :checked="isAllSelected"
             :indeterminate="isSomeSelected"
             @change="toggleSelectAll"
-            class="w-[20px] h-[20px] border !border-Mgray400 rounded-[4px] accent-emerald-600 cursor-pointer"
+            class="w-5 h-5 border border-Mgray400! rounded-lg accent-emerald-600 cursor-pointer"
             aria-label="Sélectionner toutes les commandes"
           />
         </th>
@@ -76,7 +76,7 @@ function handleRowClick(order: SalesOrderToPlan) {
           type="checkbox"
           :checked="store.selectedOrderNos.has(order.salesOrderNo)"
           @change="store.toggleSelection(order)"
-          class="w-[20px] h-[20px] border !border-Mgray400 rounded-[4px] accent-emerald-600 cursor-pointer"
+          class="w-5 h-5 border border-Mgray400! rounded-lg accent-emerald-600 cursor-pointer"
           :aria-label="`Sélectionner commande ${order.salesOrderNo}`"
         />
       </td>
@@ -85,7 +85,7 @@ function handleRowClick(order: SalesOrderToPlan) {
       <!-- Commande -->
       <td class="px-4 py-3">
         <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+          <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border border-Mborderborderprimary! flex items-center justify-center shrink-0">
             <FileText class="h-4 w-4 text-Mtexttextsecondary" />
           </div>
           <div>

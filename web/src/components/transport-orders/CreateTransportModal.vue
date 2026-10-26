@@ -100,7 +100,7 @@ async function handleSubmit() {
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+    class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
   >
     <div
       class="relative w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200"

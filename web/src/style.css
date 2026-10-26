@@ -50,6 +50,7 @@
     --color-Mmaincolorgreen: var(--primary);
     --color-Mtexttextprimary: var(--foreground);
     --color-Mtexttextsecondary: var(--muted-foreground);
+    --color-Mtexttextinvert: var(--muted-foreground);
     --color-Msurfacesurfaceinvert: var(--muted-foreground);
     --color-Malertswarning: #D97706;
     --color-Malertserror: #DC2626;

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { DateValue } from 'reka-ui'
+import { parseDate } from '@internationalized/date'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TransportOrdersTable from '@/components/transport-orders/TransportOrdersTable.vue'
 import CreateTransportModal from '@/components/transport-orders/CreateTransportModal.vue'
@@ -8,15 +10,65 @@ import TablePagination from '@/components/shared/TablePagination.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
 import { useTransportOrdersStore } from '@/stores/transport-orders'
-
-import { Plus, Calendar, RefreshCw, X } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { Plus, Calendar as CalendarIcon, RefreshCw, X } from '@lucide/vue'
 
 const store = useTransportOrdersStore()
 const isCreateModalOpen = ref(false)
+const isCalendarOpen = ref(false)
+const calendarDateValue = ref<any>(undefined)
 
 onMounted(() => {
   store.fetchOrders()
 })
+
+watch(
+  () => store.dateFilter,
+  (newVal) => {
+    if (newVal) {
+      try {
+        calendarDateValue.value = parseDate(newVal)
+      } catch {
+        calendarDateValue.value = undefined
+      }
+    } else {
+      calendarDateValue.value = undefined
+    }
+  },
+  { immediate: true },
+)
+
+const formattedDate = computed(() => {
+  if (!store.dateFilter) return null
+  try {
+    const [year, month, day] = store.dateFilter.split('-').map(Number)
+    const d = new Date(year, month - 1, day)
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(d)
+  } catch {
+    return store.dateFilter
+  }
+})
+
+function onDateSelected(date: DateValue | undefined) {
+  if (date) {
+    store.setDateFilter(date.toString())
+    isCalendarOpen.value = false
+  } else {
+    store.setDateFilter('')
+  }
+}
+
+function clearDateFilter() {
+  calendarDateValue.value = undefined
+  store.setDateFilter('')
+  isCalendarOpen.value = false
+}
 
 const statusOptions = [
   { value: 'all', label: 'Tous' },
@@ -29,83 +81,97 @@ const statusOptions = [
 <template>
   <AppLayout title="Ordres de transport">
     <div class="space-y-6 max-w-7xl mx-auto">
-      <!-- En-tête et Bouton de création -->
+      <!-- En-tête et Actions -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+          <h2 class="text-4xl font-bold tracking-tight text-foreground sm:text-3xl mb-1">
             Ordres de transport
           </h2>
-          <p class="text-xs text-muted-foreground mt-1">
-            Suivi opérationnel des tournées, vérification des capacités et validation des départs.
+          <p class="text__16 text-Mtexttextsecondary">
+            Suivi opérationnel des tournées, vérification des capacités.
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Popover Filtre Date & Bouton calendrier -->
+          <div class="relative flex items-center">
+            <Popover v-model:open="isCalendarOpen">
+              <PopoverTrigger as-child>
+                <Button
+                  type="button"
+                  variant="outline"
+                  class="h-11.5 flex items-center gap-2.5 border-border hover:bg-accent font-medium text-sm text-foreground hover:cursor-pointer"
+                  :class="store.dateFilter ? 'pl-4 pr-10' : 'px-4'"
+                >
+                  <CalendarIcon class="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span>{{ formattedDate || 'Filtrer par date' }}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-auto p-0 rounded-2xl border-border bg-card shadow-lg" align="end">
+                <Calendar
+                  :model-value="calendarDateValue"
+                  @update:model-value="onDateSelected"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <!-- Bouton Close quand une date est sélectionnée (intégré à l'intérieur à droite) -->
+            <Button
+              v-if="store.dateFilter"
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="Effacer la date"
+              @click.stop.prevent="clearDateFilter"
+              class="absolute right-1.5 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
+            >
+              <X class="h-4 w-4" />
+            </Button>
+          </div>
+
           <!-- Bouton rafraîchir -->
-          <button
+          <Button
             type="button"
+            variant="outline"
             @click="store.fetchOrders()"
             :disabled="store.isLoading"
             title="Rafraîchir la liste"
-            class="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition"
+            class="h-11.5 px-4 flex items-center gap-2 border-border bg-card hover:bg-accent font-medium text-sm text-foreground hover:cursor-pointer"
           >
-            <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': store.isLoading }" />
-          </button>
+            <RefreshCw class="h-4 w-4 text-muted-foreground" :class="{ 'animate-spin': store.isLoading }" />
+            <span>Rafraîchir</span>
+          </Button>
 
-          <!-- Bouton Créer un ordre -->
-          <button
+          <!-- Bouton Nouveau transport -->
+          <Button
             type="button"
             @click="isCreateModalOpen = true"
-            class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition transform hover:scale-105 active:scale-95"
+            class="h-11.5 px-4 hover:cursor-pointer"
           >
             <Plus class="h-4 w-4" />
             <span>Nouveau transport</span>
-          </button>
+          </Button>
         </div>
       </div>
 
-      <!-- Filtres par Statut et par Date -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <!-- Status Tabs -->
-        <div class="flex rounded-xl bg-muted p-1 text-xs font-semibold">
+      <!-- Filtres par Statut (Tabs style Stripe / SaaS comme sur l'image) -->
+      <div class="border-b border-border">
+        <nav class="flex items-center gap-6 sm:gap-8 -mb-px overflow-x-auto" aria-label="Filtres de statut">
           <button
             v-for="opt in statusOptions"
             :key="opt.value"
             type="button"
             @click="store.setStatusFilter(opt.value)"
-            class="rounded-lg px-3.5 py-1.5 transition"
+            class="relative pb-3 text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer border-b-2"
             :class="[
               store.statusFilter === opt.value
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'border-foreground text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted',
             ]"
           >
             {{ opt.label }}
           </button>
-        </div>
-
-        <!-- Filtre Date & Reset -->
-        <div class="flex items-center gap-2">
-          <div class="relative min-w-[170px]">
-            <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-            <input
-              type="date"
-              :value="store.dateFilter"
-              @change="(e: any) => store.setDateFilter(e.target.value)"
-              class="w-full rounded-xl border border-border bg-background py-1.5 pl-8 pr-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-            />
-          </div>
-
-          <button
-            v-if="store.statusFilter !== 'all' || store.dateFilter"
-            type="button"
-            @click="store.resetFilters()"
-            class="inline-flex items-center gap-1 rounded-xl border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition"
-          >
-            <X class="h-3.5 w-3.5" />
-            <span>Effacer</span>
-          </button>
-        </div>
+        </nav>
       </div>
 
       <!-- États de chargement, erreur et tableau -->
@@ -139,7 +205,6 @@ const statusOptions = [
           @change-limit="store.setLimit"
         />
       </div>
-
 
       <!-- Dialogue de création d'ordre -->
       <CreateTransportModal

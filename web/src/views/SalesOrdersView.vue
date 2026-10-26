@@ -10,7 +10,6 @@ import TablePagination from '@/components/shared/TablePagination.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
 import ErrorState from '@/components/shared/ErrorState.vue'
 import { useSalesOrdersStore } from '@/stores/sales-orders'
-import { RefreshCw } from '@lucide/vue'
 
 const store = useSalesOrdersStore()
 const isModalOpen = ref(false)
@@ -73,20 +72,9 @@ onMounted(() => {
       </div>
 
       <!-- Barre de filtres et recherche -->
-       <div class="flex items-center xl:flex-nowrap! flex-wrap gap-3 relative z-2">
-<SalesOrdersFilters />
-<!-- Bouton rafraîchir -->
-<button
-            type="button"
-            @click="store.fetchOrders()"
-            :disabled="store.isLoading"
-            title="Rafraîchir les données"
-            class="flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition cursor-pointer"
-          >
-            <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': store.isLoading }" />
-          </button>
-
-       </div>
+      <div class="relative z-2">
+        <SalesOrdersFilters />
+      </div>
       
 
       <!-- États de chargement, erreur et tableau -->

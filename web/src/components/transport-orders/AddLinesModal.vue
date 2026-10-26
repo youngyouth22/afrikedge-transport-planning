@@ -4,8 +4,6 @@ import { salesOrdersApi, type SalesOrderToPlan } from '@/api/sales-orders.api'
 import { transportOrdersApi } from '@/api/transport-orders.api'
 import { toast } from 'vue-sonner'
 import {
-  X,
-  Plus,
   AlertTriangle,
   Loader2,
   CheckCircle2,
@@ -14,6 +12,15 @@ import {
   FileText,
 } from '@lucide/vue'
 import TablePill from '@/components/shared/TablePill.vue'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 const props = defineProps<{
   open: boolean
@@ -56,6 +63,11 @@ async function loadOrders() {
   }
 }
 
+function onOpenChange(val: boolean) {
+  if (!val) {
+    emit('close')
+  }
+}
 
 function toggleSelect(no: string) {
   const next = new Set(selectedNos.value)
@@ -111,36 +123,22 @@ async function handleConfirm() {
 </script>
 
 <template>
-  <div
-    v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
-  >
-    <div
-      class="relative w-full max-w-2xl rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
-    >
+  <Dialog :open="open" @update:open="onOpenChange">
+    <DialogContent class="sm:max-w-2xl max-h-[90vh] flex flex-col p-6 gap-5">
       <!-- Header -->
-      <div class="flex items-center justify-between border-b border-border pb-4 shrink-0">
-        <div class="flex items-center gap-2.5">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Plus class="h-5 w-5" />
-          </div>
+      <DialogHeader class="border-b border-border pb-4 shrink-0 text-left">
+        <div class="flex items-center gap-3">
+         
           <div>
-            <h3 class="text-base font-bold text-foreground">
+            <DialogTitle class="text-2xl font-bold text-foreground">
               Ajouter des commandes à {{ transportNo }}
-            </h3>
-            <p class="text-xs text-muted-foreground">
+            </DialogTitle>
+            <DialogDescription class="textbase text-muted-foreground mt-0.5">
               Sélectionnez les commandes à planifier compatibles avec la capacité restante.
-            </p>
+            </DialogDescription>
           </div>
         </div>
-        <button
-          type="button"
-          @click="$emit('close')"
-          class="rounded-xl p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition"
-        >
-          <X class="h-4 w-4" />
-        </button>
-      </div>
+      </DialogHeader>
 
       <!-- Erreur si présente -->
       <div
@@ -155,32 +153,32 @@ async function handleConfirm() {
       </div>
 
       <!-- Live Capacity Summary -->
-      <div class="rounded-2xl border border-border bg-muted/30 p-3.5 space-y-2 shrink-0">
-        <div class="flex items-center justify-between text-xs">
+      <div class="rounded-2xl border border-border p-3.5 space-y-2 shrink-0">
+        <div class="flex items-center justify-between">
           <span class="text-muted-foreground">Poids sélectionné :</span>
           <strong class="text-foreground">+{{ additionalWeightKg.toLocaleString('fr-FR') }} kg</strong>
         </div>
-        <div class="flex items-center justify-between text-xs">
+        <div class="flex items-center justify-between">
           <span class="text-muted-foreground">Nouveau poids total :</span>
           <strong :class="isOverCapacity ? 'text-destructive font-black' : 'text-foreground'">
             {{ newTotalWeightKg.toLocaleString('fr-FR') }} / {{ capacityKg.toLocaleString('fr-FR') }} kg
           </strong>
         </div>
-        <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div class="h-2 w-full overflow-hidden bg-muted">
           <div
-            class="h-full rounded-full transition-all duration-300"
+            class="h-full  transition-all duration-300"
             :class="isOverCapacity ? 'bg-destructive' : 'bg-primary'"
             :style="{ width: `${Math.min(100, (newTotalWeightKg / (capacityKg || 1)) * 100)}%` }"
           />
         </div>
-        <div v-if="isOverCapacity" class="text-[11px] font-bold text-destructive flex items-center gap-1">
+        <div v-if="isOverCapacity" class="text-[14px] font-medium text-destructive flex items-center gap-1">
           <AlertTriangle class="h-3.5 w-3.5" />
           <span>Dépassement de capacité de {{ (newTotalWeightKg - capacityKg).toLocaleString('fr-FR') }} kg</span>
         </div>
       </div>
 
       <!-- Orders List Scrollable -->
-      <div class="flex-1 overflow-y-auto min-h-[220px] rounded-2xl border border-border divide-y divide-border">
+      <div class="flex-1 overflow-y-auto min-h-55 rounded-2xl border border-border divide-y divide-border">
         <div v-if="isLoading" class="p-8 text-center text-xs text-muted-foreground">
           Chargement des commandes...
         </div>
@@ -203,10 +201,10 @@ async function handleConfirm() {
               type="checkbox"
               :checked="selectedNos.has(order.salesOrderNo)"
               @click.stop="toggleSelect(order.salesOrderNo)"
-              class="w-[20px] h-[20px] border !border-Mgray400 rounded-[4px] accent-emerald-600 cursor-pointer"
+              class="w-5 h-5 border border-Mgray400! rounded-lg accent-emerald-600 cursor-pointer"
             />
             <div class="flex items-center gap-2.5">
-              <div class="h-8 w-8 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+              <div class="h-8 w-8 rounded-full bg-Msurfacesurfacesecondary border border-Mborderborderprimary! flex items-center justify-center shrink-0">
                 <FileText class="h-3.5 w-3.5 text-Mtexttextsecondary" />
               </div>
               <div>
@@ -228,30 +226,32 @@ async function handleConfirm() {
       </div>
 
       <!-- Footer Buttons -->
-      <div class="flex items-center justify-between border-t border-border pt-4 shrink-0">
-        <div class="text-xs text-muted-foreground">
+      <DialogFooter class="bg-transparent p-0 m-0 rounded-none border-0 flex flex-row items-center justify-between sm:justify-between w-full shrink-0">
+        <div class=" text-muted-foreground">
           <strong class="text-foreground">{{ selectedNos.size }}</strong> commande(s) sélectionnée(s)
         </div>
         <div class="flex items-center gap-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            class="h-11.5 px-5 cursor-pointer"
             @click="$emit('close')"
-            class="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent transition"
           >
             Annuler
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            @click="handleConfirm"
+            variant="default"
+            class="h-11.5 px-5 cursor-pointer inline-flex items-center gap-2"
             :disabled="isSubmitting || selectedNos.size === 0 || isOverCapacity"
-            class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="handleConfirm"
           >
             <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
             <CheckCircle2 v-else class="h-4 w-4" />
             <span>{{ isSubmitting ? 'Ajout en cours...' : 'Ajouter les commandes' }}</span>
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
-  </div>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

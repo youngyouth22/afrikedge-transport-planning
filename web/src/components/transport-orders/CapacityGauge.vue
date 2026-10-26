@@ -57,9 +57,9 @@ const gaugeColor = computed(() => {
     </div>
 
     <!-- Visual Progress Bar -->
-    <div class="h-4 w-full overflow-hidden rounded-full bg-muted/80 p-0.5">
+    <div class="h-4 w-full overflow-hidden  bg-muted/80 p-0.5">
       <div
-        class="h-full rounded-full transition-all duration-500 shadow-sm"
+        class="h-full transition-all duration-500 shadow-sm"
         :class="gaugeColor"
         :style="{ width: `${Math.min(100, (totalWeightKg / (capacityKg || 1)) * 100)}%` }"
       />

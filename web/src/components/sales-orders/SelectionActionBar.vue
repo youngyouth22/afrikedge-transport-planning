@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useSalesOrdersStore } from '@/stores/sales-orders'
 import { PlusCircle, Weight, X, CheckSquare } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 
 const store = useSalesOrdersStore()
 
@@ -20,22 +21,22 @@ defineEmits<{
   >
     <div
       v-if="store.selectedCount > 0"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 rounded-2xl border border-emerald-500/30 bg-slate-950/90 px-6 py-3.5 shadow-2xl backdrop-blur-xl text-white"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 rounded-full border border-emerald-500/30 bg-olive-950 px-3 py-3.5 shadow-2xl text-white"
     >
       <!-- Compteur sélection -->
       <div class="flex items-center gap-2 border-r border-slate-800 pr-4">
-        <CheckSquare class="h-4 w-4 text-emerald-400" />
-        <span class="text-xs font-semibold">
-          <strong class="text-emerald-400 font-bold text-sm">{{ store.selectedCount }}</strong>
+        <CheckSquare class="h-5 w-5 text-white" />
+        <span class="text-base font-semibold">
+          <strong class="text-white font-bold text-sm">{{ store.selectedCount }}</strong>
           {{ store.selectedCount > 1 ? 'commandes' : 'commande' }}
         </span>
       </div>
 
       <!-- Poids cumulé -->
       <div class="flex items-center gap-2 border-r border-slate-800 pr-4">
-        <Weight class="h-4 w-4 text-emerald-400" />
+        <Weight class="h-5 w-5 text-white" />
         <div class="flex items-baseline gap-1">
-          <span class="text-xs text-slate-400">Poids total :</span>
+          <span class="text-base text-white">Poids total :</span>
           <strong class="text-sm font-bold text-white tracking-wide">
             {{ store.selectedTotalWeight.toLocaleString('fr-FR') }}
           </strong>
@@ -44,21 +45,19 @@ defineEmits<{
       </div>
 
       <!-- Bouton Annuler sélection -->
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         @click="store.clearSelection()"
-        class="inline-flex items-center gap-1 rounded-xl p-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition"
+        class=" hover:cursor-pointer text-base"
         title="Désélectionner tout"
       >
-        <X class="h-3.5 w-3.5" />
         <span class="hidden sm:inline">Annuler</span>
       </button>
 
       <!-- Action Button -->
-      <button
-        type="button"
+      <Button
         @click="$emit('open-assign-modal')"
-        class="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-md hover:bg-emerald-400 transition transform hover:scale-105 active:scale-95"
+        class=" text-base rounded-full h-11 px-3"
       >
         <PlusCircle class="h-4 w-4" />
         <span>Ajouter à un transport</span>

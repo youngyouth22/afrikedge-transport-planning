@@ -2,6 +2,8 @@
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useLayoutStore } from '@/stores/layout'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 import {
   ClipboardList,
   Truck,
@@ -14,6 +16,7 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const layoutStore = useLayoutStore()
+const { confirm, confirmDialogProps, handleConfirm, handleCancel } = useConfirmDialog()
 
 const navigation = [
   {
@@ -39,7 +42,17 @@ function handleNavClick() {
   layoutStore.closeSidebar()
 }
 
-function handleLogout() {
+async function handleLogout() {
+  const confirmed = await confirm({
+    title: 'Se déconnecter',
+    description: 'Êtes-vous sûr de vouloir vous déconnecter de votre session ? Vous serez redirigé vers la page de sélection de profil.',
+    confirmText: 'Se déconnecter',
+    cancelText: 'Annuler',
+    variant: 'destructive',
+    confirmVariant: 'destructive',
+  })
+  if (!confirmed) return
+
   userStore.clearUser()
   layoutStore.closeSidebar()
   router.push('/select-user')
@@ -121,4 +134,11 @@ function handleLogout() {
       </div>
     </div>
   </aside>
+
+  <!-- Dialogue de confirmation AlertDialog pour la déconnexion -->
+  <ConfirmDialog
+    v-bind="confirmDialogProps"
+    @confirm="handleConfirm"
+    @cancel="handleCancel"
+  />
 </template>

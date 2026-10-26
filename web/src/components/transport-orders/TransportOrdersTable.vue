@@ -54,7 +54,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
       <!-- Numéro de transport -->
       <td class="px-5 py-3.5">
         <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary flex items-center justify-center shrink-0">
+          <div class="h-9 w-9 rounded-full bg-Msurfacesurfacesecondary border border-Mborderborderprimary! flex items-center justify-center shrink-0">
             <Truck class="h-4 w-4 text-Mtexttextsecondary" />
           </div>
           <div>
@@ -69,7 +69,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
       <!-- Véhicule -->
       <td class="px-5 py-3.5">
         <div class="space-y-1">
-          <TablePill :icon="Truck" icon-class="text-Mmaincolorgreen">
+          <TablePill :icon="Truck" icon-class="text-Mmaincolorgreen" class=" bg-transparent! border-none! px-0!">
             {{ order.vehicleCode }}
           </TablePill>
           <div class="text-xs text-Mtexttextsecondary font-mono pl-0.5">
@@ -93,7 +93,7 @@ function getFillRatio(totalKg: number, capacityKg: number) {
       </td>
 
       <!-- Jauge remplissage -->
-      <td class="px-5 py-3.5 min-w-[210px]">
+      <td class="px-5 py-3.5 min-w-52.5">
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-xs">
             <span class="font-medium text-Mtexttextprimary text__14">
@@ -103,9 +103,9 @@ function getFillRatio(totalKg: number, capacityKg: number) {
               {{ getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) }} %
             </span>
           </div>
-          <div class="h-2 w-full overflow-hidden rounded-full bg-Msurfacesurfacesecondary border !border-Mborderborderprimary">
+          <div class="h-2 w-full overflow-hidden bg-Msurfacesurfacesecondary border border-Mborderborderprimary!">
             <div
-              class="h-full rounded-full transition-all duration-300"
+              class="h-full  transition-all duration-300"
               :class="[
                 getFillRatio(order.totalWeightKg, order.vehicleCapacityKg) >= 90
                   ? 'bg-amber-500'

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useUserStore, AVAILABLE_USERS, type UserId } from '@/stores/user'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 import { toast } from 'vue-sonner'
 import { Check, ChevronDown, UserCheck, Shield, Truck } from '@lucide/vue'
 import { ref } from 'vue'
@@ -7,6 +9,7 @@ import { onClickOutside } from '@vueuse/core'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const userStore = useUserStore()
+const { confirm, confirmDialogProps, handleConfirm, handleCancel } = useConfirmDialog()
 const isOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 
@@ -14,15 +17,26 @@ onClickOutside(dropdownRef, () => {
   isOpen.value = false
 })
 
-function switchUser(id: UserId) {
+async function switchUser(id: UserId) {
   if (userStore.currentUserId === id) {
     isOpen.value = false
     return
   }
 
-  userStore.setUser(id)
-  isOpen.value = false
   const user = AVAILABLE_USERS[id]
+  isOpen.value = false
+
+  const confirmed = await confirm({
+    title: `Basculer vers ${user.name}`,
+    description: `Souhaitez-vous basculer votre profil d'accès vers ${user.name} (${user.roleLabel}) ? Les permissions seront immédiatement actualisées.`,
+    confirmText: 'Basculer',
+    confirmVariant: 'default',
+    variant: 'default',
+    icon: user.role === 'DISPATCHER' ? Truck : Shield,
+  })
+  if (!confirmed) return
+
+  userStore.setUser(id)
   toast.info(`Profil basculé : ${user.name} (${user.roleLabel})`, {
     description: `Les permissions et actions affichées sont désormais celles du rôle ${user.role}.`,
   })
@@ -59,9 +73,6 @@ function switchUser(id: UserId) {
       v-if="isOpen"
       class="absolute right-0 mt-2 w-72 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in zoom-in-95 duration-150"
     >
-      <div class="px-3 py-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-        Basculer d'identité (Test des rôles)
-      </div>
 
       <div class="space-y-1">
         <!-- Option Diane -->
@@ -69,22 +80,21 @@ function switchUser(id: UserId) {
           type="button"
           @click="switchUser('diane')"
           class="flex w-full items-start gap-3 rounded-xl p-2.5 text-left text-xs transition hover:bg-accent cursor-pointer"
-          :class="{ 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20': userStore.currentUserId === 'diane' }"
         >
-          <Avatar class="h-8 w-8 shrink-0">
+          <Avatar class="h-10 w-10 shrink-0">
             <AvatarImage src="https://api.dicebear.com/10.x/initials/svg?seed=Diane" alt="Diane" />
             <AvatarFallback>DI</AvatarFallback>
           </Avatar>
           <div class="flex-1">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-foreground">Diane</span>
-              <Check v-if="userStore.currentUserId === 'diane'" class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span class="font-bold text-foreground text-[18px]">Diane</span>
+              <Check v-if="userStore.currentUserId === 'diane'" class="text-emerald-500"/>
             </div>
-            <div class="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+            <div class="flex items-center gap-1 text-[12px] text-emerald-600 dark:text-emerald-400 font-medium">
               <Truck class="h-3 w-3" />
               <span>DISPATCHER (Répartitrice)</span>
             </div>
-            <p class="mt-1 text-[10px] text-muted-foreground leading-snug">
+            <p class="mt-1 text-[12px] text-muted-foreground leading-snug">
               Création, affectation, départs.
             </p>
           </div>
@@ -95,22 +105,21 @@ function switchUser(id: UserId) {
           type="button"
           @click="switchUser('eric')"
           class="flex w-full items-start gap-3 rounded-xl p-2.5 text-left text-xs transition hover:bg-accent cursor-pointer"
-          :class="{ 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20': userStore.currentUserId === 'eric' }"
         >
-          <Avatar class="h-8 w-8 shrink-0">
+          <Avatar class="h-10 w-10 shrink-0">
             <AvatarImage src="https://api.dicebear.com/10.x/initials/svg?seed=Eric" alt="Eric" />
             <AvatarFallback>ER</AvatarFallback>
           </Avatar>
           <div class="flex-1">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-foreground">Eric</span>
-              <Check v-if="userStore.currentUserId === 'eric'" class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span class="font-bold text-foreground text-[18px]">Eric</span>
+              <Check v-if="userStore.currentUserId === 'eric'" class="text-emerald-500"/>
             </div>
-            <div class="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+            <div class="flex items-center gap-1 text-[12px] text-emerald-600 dark:text-emerald-400 font-medium">
               <Shield class="h-3 w-3" />
               <span>LOGISTICS_MANAGER</span>
             </div>
-            <p class="mt-1 text-[10px] text-muted-foreground leading-snug">
+            <p class="mt-1 text-[12px] text-muted-foreground leading-snug">
               Supervision + Validation des ordres.
             </p>
           </div>
@@ -121,12 +130,19 @@ function switchUser(id: UserId) {
         <router-link
           to="/select-user"
           @click="isOpen = false"
-          class="flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+          class="flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
         >
-          <UserCheck class="h-3 w-3" />
+          <UserCheck class="h-4 w-auto" />
           <span>Ouvrir l'écran d'accueil des profils</span>
         </router-link>
       </div>
     </div>
+
+    <!-- Dialogue de confirmation réutilisable Alert / AlertDialog -->
+    <ConfirmDialog
+      v-bind="confirmDialogProps"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
